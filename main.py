@@ -1,6 +1,7 @@
 from coin import Ledger, Block, Transaction
 from genesis import God_Transaction
 import pickle
+import hashlib
 
 #Import python ledger object, data type to be update to allow easier modifictaion
 ledger = pickle.load( open( "ledger.p", "rb" ) )
