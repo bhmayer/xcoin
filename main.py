@@ -1,5 +1,4 @@
 from coin import Ledger, Block, Transaction
-from genesis import God_Transaction
 import pickle
 import hashlib
 
@@ -17,13 +16,13 @@ while True:
         break
 
     elif command[0] == "balance":
-        print(ledger.check_balance(command[1]))
+        print(ledger.check_balance(int(command[1])))
 
     elif command[0] == "update":
-        new_block = Block(new_transactions, "0", 0)
+        new_block = Block(new_transactions, 0, 0)
         ledger.add(new_block)
         new_transactions = []
 
     elif command[0] == "send":
-        new_transaction = Transaction(int(command[1]), int(command[1]), command[2], command[3])
+        new_transaction = Transaction(0, int(command[1]), int(command[2]), int(command[3]))
         new_transactions.append(new_transaction)

@@ -1,3 +1,5 @@
+import hashlib
+
 #Function to get all transactions associated with an address
 def get_transactions (ledger, address):
     transactions = []
@@ -21,10 +23,19 @@ def check_balance(ledger, address):
     #Sums up value of transactions, needs update for more complete transaction handeling
     for entry in transactions:
         if entry.receiver == address:
-            balance += entry.output_value
+            balance += entry.value
         if entry.sender == address:
-            balance -= entry.output_value
+            balance -= entry.value
     return balance 
+
+#Label and assign hash value to transactions once assigned to block
+def label_transactions(block, block_num):
+    counter = 0
+    for transaction in block.transactions:
+        transaction.set_block(block_num)
+        transaction.set_number(counter)
+        transaction.set_hash()
+
 
 def get_unspent_transactions(ledger, address):
     transactions = get_transactions(ledger, address)

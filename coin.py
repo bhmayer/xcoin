@@ -1,12 +1,15 @@
 import datetime
 import helper
+import hashlib
 
 #Ledger class for holding blocks
 class Ledger:
     def __init__ (self, blocks):
+        helper.label_transactions(blocks[0], 0)
         self.blocks = blocks
 
     def add (self, block):
+        helper.label_transactions(block, len(self.blocks))
         self.blocks.append(block)
 
     def check_balance(self, address):
@@ -24,10 +27,9 @@ class Block:
 
 #Transaction class representing the sending of coin
 class Transaction:
-    def __init__ (self, input_transaction, output_value, sender, receiver):
-        self.input_transaction = input_transaction
-        self.input_value = input_transaction.output_value
-        self.output_value = output_value
+    def __init__ (self, input_transaction_hash, value, sender, receiver):
+        self.input_transaction_hash = input_transaction_hash
+        self.value = value
         self.sender = sender
         self.receiver = receiver
         self.block = -1
@@ -41,5 +43,13 @@ class Transaction:
     def set_number (self, x):
         self.number = x
 
+    def set_hash (self):
+        print(self.input_transaction_hash)
+        print(hash(self.input_transaction_hash))
+        print(self.number)
+        hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number)
+        print(hash_value)
+        self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
+        print(self.hash)
 
         
