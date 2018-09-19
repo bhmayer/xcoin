@@ -44,12 +44,7 @@ class Transaction:
         self.number = x
 
     def set_hash (self):
-        print(self.input_transaction_hash)
-        print(hash(self.input_transaction_hash))
-        print(self.number)
         hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number)
-        print(hash_value)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
-        print(self.hash)
 
         

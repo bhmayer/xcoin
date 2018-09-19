@@ -1,6 +1,7 @@
 from coin import Ledger, Block, Transaction
 import pickle
 import hashlib
+import helper
 
 #Import python ledger object, data type to be update to allow easier modifictaion
 ledger = pickle.load( open( "ledger.p", "rb" ) )
@@ -24,5 +25,13 @@ while True:
         new_transactions = []
 
     elif command[0] == "send":
-        new_transaction = Transaction(0, int(command[1]), int(command[2]), int(command[3]))
+        unspent = helper.get_unspent_transactions(ledger, int(command[2]))
+        new_transaction = Transaction(unspent[0].hash, unspent[0].value, int(command[2]), int(command[3]))
         new_transactions.append(new_transaction)
+
+    elif command[0] == "unspent":
+        unspent = helper.get_unspent_transactions(ledger, int(command[1]))
+        for un in unspent:
+            print(un.value)
+
+

@@ -28,6 +28,7 @@ def check_balance(ledger, address):
             balance -= entry.value
     return balance 
 
+
 #Label and assign hash value to transactions once assigned to block
 def label_transactions(block, block_num):
     counter = 0
@@ -36,10 +37,20 @@ def label_transactions(block, block_num):
         transaction.set_number(counter)
         transaction.set_hash()
 
-
+#Get list of unspent transactions for a user
 def get_unspent_transactions(ledger, address):
     transactions = get_transactions(ledger, address)
+    spent_transactions = []
+    for transaction in transactions:
+        spent_transactions.append(transaction.input_transaction_hash)
     
+    unspent_transactions = []
+    for transaction in transactions:
+        if (transaction.hash not in spent_transactions) & (transaction.receiver == address):
+            unspent_transactions.append(transaction)
+        
+    return unspent_transactions
 
-def valid_transaction(transaction, ledger):
+#Check transaction for validity
+def valid_transaction(transaction, ledger, unspent_transactions):
     return 0
