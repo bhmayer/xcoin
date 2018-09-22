@@ -9,7 +9,9 @@ class Ledger:
         self.blocks = blocks
 
     def add (self, block):
-        helper.label_transactions(block, len(self.blocks))
+        if helper.valid_block(block, self) == False:
+            raise ValueError
+        helper.label_transactions(block, len(self.blocks))        
         self.blocks.append(block)
 
     def check_balance(self, address):
