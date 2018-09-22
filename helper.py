@@ -79,7 +79,8 @@ def get_unspent_transactions(ledger):
 def valid_transaction (transaction, ledger, unspent_transactions):
     for unspent_transaction in unspent_transactions:
         if transaction.input_transaction_hash == unspent_transaction.hash:
-            return True
+            if transaction.value <= unspent_transaction.value:
+                return True
     return False
 
 #Check block for validity
@@ -90,3 +91,8 @@ def valid_block (block, ledger):
             print("false")
             return False
     return True
+
+#Return change on block
+#def return_change(block):
+    #for transaction in block.transactions:
+
