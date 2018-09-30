@@ -1,4 +1,5 @@
 import hashlib
+import coin
 
 #Function to get all transactions associated with an address
 def get_transactions_user (ledger, address):
@@ -80,6 +81,7 @@ def valid_transaction (transaction, ledger, unspent_transactions):
     for unspent_transaction in unspent_transactions:
         if transaction.input_transaction_hash == unspent_transaction.hash:
             if transaction.value <= unspent_transaction.value:
+                transaction.set_input_value(unspent_transaction.value)
                 return True
     return False
 
@@ -92,7 +94,17 @@ def valid_block (block, ledger):
             return False
     return True
 
+#WORK ON THIS!
+#-issue is how do you return change?
+#-How do you easily track down previous transaction?
 #Return change on block
-#def return_change(block):
-    #for transaction in block.transactions:
+def return_change(block):
+    change_transactions = []
+    for transaction in block.transactions:
+        if transaction.value < transaction.input_value:
+            change = coin.Transaction(transaction.input_transaction_hash, transaction.input_value - transaction.value, transaction.sender, transaction.sender)
+            change_transactions.append(change)
+    return change_transactions
+        
+        
 
