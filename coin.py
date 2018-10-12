@@ -46,7 +46,7 @@ class Block:
 
     #Converts block to JSON
     def dump(self):
-        block_data = [timestamp, transactions, processor, hash]
+        block_data = [self.timestamp, self.processor, self.hash]
         transaction_data = []
         for transaction in self.transactions:
             transaction_data.append(transaction.dump())
@@ -57,12 +57,12 @@ class Block:
     @classmethod
     def from_json(cls, data):
         data = json.loads(data)
-        block_data = json[0]
-        transaction_data = json[1]
+        block_data = data[0]
+        transaction_data = data[1]
         transactions = []
         for transaction in transaction_data:
             transactions.append(Transaction.from_json(transaction))
-        block = cls (transactions, block_data[1]. block_data[2], block_data[3])
+        block = cls(transactions, block_data[1], block_data[2])
         block.timestamp = block_data[0]
         return block
 

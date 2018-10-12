@@ -34,14 +34,16 @@ class NodeProtocol(LineReceiver):
         self.state = "OLD"
 
     def lineReceived(self, line):
-        message = pickle.loads(line)
+        line = line.decode("ascii")
+        message = json.loads(line)
         print("message_received")
         if message[0] == 0:
             self.factory.newBlock(message[1])
 
     def sendObject(self, data):
-        message = pickle.dumps([0, data])
-        self.sendLine(message)
+        data = [0, data]
+        message = json.dumps(data)
+        self.sendLine(message.encode("ascii"))
 
 class CommandProtocol(LineReceiver):
     delimiter = b'\n' # unix terminal style newlines. remove this line
@@ -98,7 +100,7 @@ class CommandProtocol(LineReceiver):
         return
 
     def do_bootstrap(self):
-        reactor.connectTCP("127.0.0.1", 8123, factory)
+        reactor.connectTCP("127.0.0.1", 8124, factory)
 
     def do_update(self):
         """ Create new block """
@@ -119,6 +121,9 @@ class CommandProtocol(LineReceiver):
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
         reactor.stop()
+
+    def do_list(self):
+        factory.listPeers()
 
 class NodeFactory(ClientFactory):
     def __init__(self):
@@ -145,16 +150,23 @@ class NodeFactory(ClientFactory):
         self.new_transactions = []
 
     def newBlock(self, block):
-        if ledger.add(block):
-            print("Received new block!")
-        else:
-            print("Invalid block")
-        self.new_transactions = []
-    
+        try:
+            block = Block.from_json(block)
+            if ledger.add(block):
+                print("Received new block!")
+            else:
+                print("Invalid block")
+            self.new_transactions = []
+        except Exception as e:
+            print(e)
+            
     def sendPeers(self, data):
         for peer in self.peers:
-            self.peers[peer].sendObject(data)
+            self.peers[peer].sendObject(data.dump())
 
+    def listPeers(self):
+        for peer in self.peers:
+            print(peer)
 
         
 
