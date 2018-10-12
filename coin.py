@@ -1,6 +1,7 @@
 import datetime
 import helper
 import hashlib
+import json
 
 #Ledger class for holding blocks
 class Ledger:
@@ -43,6 +44,29 @@ class Block:
     def extend_transactions(self, x):
         self.transactions.extend(x)
 
+    #Converts block to JSON
+    def dump(self):
+        block_data = [timestamp, transactions, processor, hash]
+        transaction_data = []
+        for transaction in self.transactions:
+            transaction_data.append(transaction.dump())
+        data = [block_data, transaction_data]
+        return json.dumps(data)
+
+    #Load block from JSON
+    @classmethod
+    def from_json(cls, data):
+        data = json.loads(data)
+        block_data = json[0]
+        transaction_data = json[1]
+        transactions = []
+        for transaction in transaction_data:
+            transactions.append(Transaction.from_json(transaction))
+        block = cls (transactions, block_data[1]. block_data[2], block_data[3])
+        block.timestamp = block_data[0]
+        return block
+
+
 
 #Transaction class representing the sending of coin
 class Transaction:
@@ -54,6 +78,7 @@ class Transaction:
         self.block = -1
         self.number = -1
         self.input_value = 0
+        self.hash = -1
     
     #Set which block the transaction has been recorded in
     def set_block (self, x):
@@ -69,5 +94,24 @@ class Transaction:
     def set_hash (self):
         hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
+
+    #Converts transaction to JSON
+    def dump(self):
+        data = [self.input_transaction_hash, self.value, self.sender, self.receiver, self.block, self.number, self.input_value, self.hash]
+        return json.dumps(data)
+
+    #Load object from JSON
+    @classmethod
+    def from_json(cls, data):
+        data = json.loads(data)
+        obj = cls(data[0], data[1], data[2], data[3])
+        obj.block = data[4]
+        obj.number = data[5]
+        obj.input_value = data[6]
+        obj.hash = data[7]
+        return obj
+
+
+
 
         
