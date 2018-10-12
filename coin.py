@@ -12,7 +12,7 @@ class Ledger:
 
         #Check validity of transactions
         if helper.valid_block(block, self) == False:
-            raise ValueError
+            return False
         
         #Add transaction to return change to sender
         change_transactions = helper.return_change(block)
@@ -23,9 +23,13 @@ class Ledger:
         #Label transactions with block number and order and assign hashes
         helper.label_transactions(block, len(self.blocks))  
         self.blocks.append(block)
+        return True
 
     def check_balance(self, address):
         return helper.check_balance(self, address)
+
+    def block_num(self):
+        return len(self.blocks)
                 
 
 #Block class for holding transactions
