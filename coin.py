@@ -7,6 +7,7 @@ import json
 class Ledger:
     def __init__ (self, blocks):
         helper.label_transactions(blocks[0], 0)
+        blocks[0].set_hash()
         self.blocks = blocks
 
     def add (self, block):
@@ -22,7 +23,8 @@ class Ledger:
         block.extend_transactions(change_transactions)
 
         #Label transactions with block number and order and assign hashes
-        helper.label_transactions(block, len(self.blocks))  
+        helper.label_transactions(block, len(self.blocks))
+        block.set_hash()  
         self.blocks.append(block)
         return True
 
@@ -31,18 +33,28 @@ class Ledger:
 
     def block_num(self):
         return len(self.blocks)
+
+    def current_block_hash(self):
+        return self.blocks[-1].hash
                 
 
 #Block class for holding transactions
 class Block:
-    def __init__ (self, transactions, processor, hash):
+    def __init__ (self, transactions, processor, prev_hash):
         self.timestamp = datetime.datetime.now().timestamp()
         self.transactions = transactions
         self.processor = processor
-        self.hash = hash
+        self.prev_hash = prev_hash
+        self.hash = -1
 
     def extend_transactions(self, x):
         self.transactions.extend(x)
+
+    def set_hash(self):
+        hash_value = str(self.timestamp) + str(self.processor) + str(self.prev_hash)
+        for transaction in self.transactions:
+            hash_value = hash_value + str(transaction.hash)
+        self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
 
     #Converts block to JSON
     def dump(self):
