@@ -7,12 +7,20 @@ from twisted.internet.protocol import Factory, ClientFactory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor, stdio
 import json
+import nacl.encoding
+import nacl.signing
 
 #Import python ledger object, data type to be update to allow easier modifictaion
 ledger = pickle.load( open( "ledger.p", "rb" ) )
 
+#Import secret key
+seed = pickle.load( open("seed.p", "rb") )
+signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
+verify_key = signing_key.verify_key
+pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
+
 #Enter address for node block rewards
-my_address = int(input("Enter your address: "))
+my_address = pubkey
 
 def nodeID(addr):
     """Helper function to create nodeid"""
@@ -95,7 +103,7 @@ class CommandProtocol(LineReceiver):
 
     def do_balance(self, address):
         """Return balance of an address"""
-        address = int(address)
+        address = address.encode("ascii")
         self.sendLine(b"Balance: " + str(factory.balance(address)).encode('ascii'))
         
     def do_send(self, value, address):
@@ -120,6 +128,9 @@ class CommandProtocol(LineReceiver):
         """ Create new block """
         factory.update()
         self.sendLine(b"New block created")
+
+    def do_address(self):
+        self.sendLine(my_address)
 
     def do_status(self):
         self.sendLine(str(ledger.block_num()).encode('UTF-8'))
