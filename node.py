@@ -100,14 +100,14 @@ class CommandProtocol(LineReceiver):
         
     def do_send(self, value, address):
         """Send value ammount"""
-        value = int(value)
+        value = float(value)
         if value == 0:
             self.sendLine(b"Transaction must be non-zero")
             return
         address = int(address)
         unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
         for unspent in unspent_transactions:
-            if unspent.value <= value:
+            if unspent.value >= value:
                 new_transaction = Transaction(unspent.hash, value, my_address, address)
                 self.factory.new_transactions.append(new_transaction)
                 return
@@ -161,7 +161,7 @@ class NodeFactory(ClientFactory):
 
     def update(self):
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
-        if ledger.add(new_block):
+        if ledger.update(new_block):
             self.sendPeers(new_block)
         else:
             print("Invalid block")

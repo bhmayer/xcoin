@@ -49,6 +49,9 @@ class CommandProtocol(LineReceiver):
     delimiter = b'\n' # unix terminal style newlines. remove this line
                       # for use with Telnet
 
+    def __init__(self, factory):
+        self.factory = factory
+
     def connectionMade(self):
         self.sendLine(b"Web checker console. Type 'help' for help.")
 
@@ -93,11 +96,22 @@ class CommandProtocol(LineReceiver):
     def do_balance(self, address):
         """Return balance of an address"""
         address = int(address)
-        self.sendLine(b"Balance: " + str(factory.balance(address)).encode('UTF-8'))
+        self.sendLine(b"Balance: " + str(factory.balance(address)).encode('ascii'))
         
-    def do_send(self, value, addres):
-        """check <url>: Attempt to download the given web page"""
-        return
+    def do_send(self, value, address):
+        """Send value ammount"""
+        value = int(value)
+        if value == 0:
+            self.sendLine(b"Transaction must be non-zero")
+            return
+        address = int(address)
+        unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
+        for unspent in unspent_transactions:
+            if unspent.value <= value:
+                new_transaction = Transaction(unspent.hash, value, my_address, address)
+                self.factory.new_transactions.append(new_transaction)
+                return
+        self.sendLine(b"No valid transactions")
 
     def do_bootstrap(self):
         reactor.connectTCP("127.0.0.1", 8124, factory)
@@ -136,14 +150,18 @@ class NodeFactory(ClientFactory):
         return newProtocol
 
     def buildCommandProtocol(self):
-        return CommandProtocol()
+        self.cmd_line = CommandProtocol(self)
+        return self.cmd_line
+
+    def userOutput(self, msg):
+        self.cmd_line.sendLine(msg.encode("ascii"))
 
     def balance(self, address):
         return ledger.check_balance(address)
 
     def update(self):
-        new_block = Block(self.new_transactions, 0, 0)
-        if ledger.add(new_block):
+        new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
+        if ledger.update(new_block):
             self.sendPeers(new_block)
         else:
             print("Invalid block")
@@ -159,7 +177,7 @@ class NodeFactory(ClientFactory):
             self.new_transactions = []
         except Exception as e:
             print(e)
-            
+    
     def sendPeers(self, data):
         for peer in self.peers:
             self.peers[peer].sendObject(data.dump())

@@ -1,5 +1,6 @@
 import hashlib
 import coin
+import copy
 
 #Function to get all transactions associated with an address
 def get_transactions_user (ledger, address):
@@ -58,7 +59,7 @@ def get_unspent_transactions_user(ledger, address):
         if (transaction.hash not in spent_transactions) & (transaction.receiver == address):
             unspent_transactions.append(transaction)
         
-    return unspent_transactions
+    return copy.deepcopy(unspent_transactions)
 
 #Get unspent transactions for the ledger
 def get_unspent_transactions(ledger):
@@ -74,7 +75,7 @@ def get_unspent_transactions(ledger):
             if (transaction.hash not in spent_transactions):
                 unspent_transactions.append(transaction)
 
-    return unspent_transactions
+    return copy.deepcopy(unspent_transactions)
 
 #Check transaction for validity
 def valid_transaction (transaction, ledger, unspent_transactions):
@@ -82,21 +83,33 @@ def valid_transaction (transaction, ledger, unspent_transactions):
         if transaction.input_transaction_hash == unspent_transaction.hash:
             if transaction.value <= unspent_transaction.value:
                 transaction.set_input_value(unspent_transaction.value)
+                unspent_transaction.value = unspent_transaction.value - transaction.value
                 return True
     return False
 
-#Check block for validity
-def valid_block (block, ledger):
+#Function for preparing block for publication
+def process_block (block, ledger):
     unspent_transactions = get_unspent_transactions(ledger)
-    for transaction in block.transactions:
-        if valid_transaction(transaction, ledger, unspent_transactions) == False:
-            print("false")
-            return False
-    return True
+    valid_transactions = []
+    input_transactions = []
 
-#WORK ON THIS!
-#-issue is how do you return change?
-#-How do you easily track down previous transaction?
+    #Iterate through and verify correct balance for input transactions
+    for transaction in block.transactions:
+        for unspent_transaction in unspent_transactions:
+            if transaction.input_transaction_hash == unspent_transaction.hash:
+                if transaction.value <= unspent_transaction.value:
+                    unspent_transaction.value = unspent_transaction.value - transaction.value
+                    valid_transactions.append(transaction)
+                    input_transactions.append(unspent_transaction)
+    #Return change
+    for transaction in input_transactions:
+        if transaction.value > 0:
+            change_transaction = coin.Transaction(transaction.hash, transaction.value, transaction.receiver, transaction.receiver)
+            valid_transactions.append(change_transaction)
+
+    return valid_transactions
+        
+
 #Return change on block
 def return_change(block):
     change_transactions = []
@@ -105,6 +118,12 @@ def return_change(block):
             change = coin.Transaction(transaction.input_transaction_hash, transaction.input_value - transaction.value, transaction.sender, transaction.sender)
             change_transactions.append(change)
     return change_transactions
+
+#Return reward transaction for miner
+def reward(block, miner_reward):
+    return coin.Transaction(0, miner_reward, -1, block.processor)
+
+
         
         
 

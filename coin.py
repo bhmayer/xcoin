@@ -3,6 +3,8 @@ import helper
 import hashlib
 import json
 
+miner_reward = 0.1
+
 #Ledger class for holding blocks
 class Ledger:
     def __init__ (self, blocks):
@@ -10,23 +12,37 @@ class Ledger:
         blocks[0].set_hash()
         self.blocks = blocks
 
-    def add (self, block):
+    def update (self, block):
 
-        #Check validity of transactions
-        if helper.valid_block(block, self) == False:
-            return False
-        
-        #Add transaction to return change to sender
-        change_transactions = helper.return_change(block)
+        #Get valid transactions
+        block.transactions = helper.process_block(block, self)
 
-        #extend block with change transactions
-        block.extend_transactions(change_transactions)
+        #Miner reward transaction
+        reward_transaction = helper.reward(block, miner_reward)
+        block.transactions.append(reward_transaction)
 
         #Label transactions with block number and order and assign hashes
         helper.label_transactions(block, len(self.blocks))
+
         block.set_hash()  
         self.blocks.append(block)
         return True
+
+    #Add new block sent from another node
+    def add (self, block):
+        reward_transaction = block.transactions.pop()
+        if helper.valid_block(block, self) == False:
+            return False
+        if reward_transaction.value != miner_reward:
+            return False
+        if self.current_block_hash != block.prev_hash:
+            return False
+
+        block.transactions.append(reward_transaction)
+
+        self.blocks.append(block)
+        return True
+        
 
     def check_balance(self, address):
         return helper.check_balance(self, address)
