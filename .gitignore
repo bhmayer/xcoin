@@ -9,6 +9,7 @@ __pycache__/
 # Files
 mirror
 ledger.p
+seed.p
 
 #dsstore
 .DS_Store
