@@ -123,6 +123,7 @@ class CommandProtocol(LineReceiver):
 
     def do_status(self):
         self.sendLine(str(ledger.block_num()).encode('UTF-8'))
+        self.sendLine(str(ledger.current_block_hash()).encode('UTF-8'))
 
     def __checkSuccess(self, pageData):
         msg = "Success: got {} bytes.".format(len(pageData))
@@ -160,6 +161,7 @@ class NodeFactory(ClientFactory):
         return ledger.check_balance(address)
 
     def update(self):
+        print(ledger.current_block_hash())
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
             self.sendPeers(new_block)

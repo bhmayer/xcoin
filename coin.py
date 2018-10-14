@@ -8,8 +8,6 @@ miner_reward = 0.1
 #Ledger class for holding blocks
 class Ledger:
     def __init__ (self, blocks):
-        helper.label_transactions(blocks[0], 0)
-        blocks[0].set_hash()
         self.blocks = blocks
 
     def update (self, block):
@@ -30,15 +28,33 @@ class Ledger:
 
     #Add new block sent from another node
     def add (self, block):
-        reward_transaction = block.transactions.pop()
-        if helper.valid_block(block, self) == False:
-            return False
-        if reward_transaction.value != miner_reward:
-            return False
-        if self.current_block_hash != block.prev_hash:
+        print(self.current_block_hash())
+        print(block.prev_hash)
+
+        #Check if we are in the right part of the tree
+        if self.current_block_hash() != block.prev_hash:
             return False
 
+        #Pop reward transaction from last part of the node
+        reward_transaction = block.transactions.pop()
+
+        #Check if transactions are valid
+        if helper.valid_block(block, self) == False:
+            return False
+
+        #Check if reward is valid
+        if reward_transaction.value != miner_reward:
+            return False
+
+        #Add back reward transaction
         block.transactions.append(reward_transaction)
+
+        #Check if hashes was properly computed
+        helper.label_transactions(block, len(self.blocks))
+        hash = block.hash
+        block.set_hash()
+        if block.hash != hash:
+            return False
 
         self.blocks.append(block)
         return True
@@ -74,7 +90,7 @@ class Block:
 
     #Converts block to JSON
     def dump(self):
-        block_data = [self.timestamp, self.processor, self.hash]
+        block_data = [self.timestamp, self.processor, self.prev_hash, self.hash]
         transaction_data = []
         for transaction in self.transactions:
             transaction_data.append(transaction.dump())
@@ -92,6 +108,7 @@ class Block:
             transactions.append(Transaction.from_json(transaction))
         block = cls(transactions, block_data[1], block_data[2])
         block.timestamp = block_data[0]
+        block.hash = block_data[3]
         return block
 
 

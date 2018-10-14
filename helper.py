@@ -109,6 +109,23 @@ def process_block (block, ledger):
 
     return valid_transactions
         
+#Check block is valid
+def valid_block (block, ledger):
+    unspent_transactions = get_unspent_transactions(ledger)
+    used_input_transactions = []
+    for transaction in block.transactions:
+        for unspent_transaction in unspent_transactions:
+            if transaction.input_transaction_hash == unspent_transaction.hash:
+                unspent_transaction.value = unspent_transaction.value - transaction.value
+                used_input_transactions.append(unspent_transaction)
+
+    for transaction in used_input_transactions:
+        if transaction.value != 0:
+            return False
+            
+    return True
+                    
+
 
 #Return change on block
 def return_change(block):
