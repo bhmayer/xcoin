@@ -95,12 +95,14 @@ def process_block (block, ledger):
 
     #Iterate through and verify correct balance for input transactions
     for transaction in block.transactions:
-        for unspent_transaction in unspent_transactions:
-            if transaction.input_transaction_hash == unspent_transaction.hash:
-                if transaction.value <= unspent_transaction.value:
-                    unspent_transaction.value = unspent_transaction.value - transaction.value
-                    valid_transactions.append(transaction)
-                    input_transactions.append(unspent_transaction)
+        if transaction.verify():
+            for unspent_transaction in unspent_transactions:
+                if transaction.input_transaction_hash == unspent_transaction.hash:
+                    if transaction.value <= unspent_transaction.value:
+                        unspent_transaction.value = unspent_transaction.value - transaction.value
+                        valid_transactions.append(transaction)
+                        input_transactions.append(unspent_transaction)
+
     #Return change
     for transaction in input_transactions:
         if transaction.value > 0:
@@ -118,11 +120,14 @@ def valid_block (block, ledger):
             if transaction.input_transaction_hash == unspent_transaction.hash:
                 unspent_transaction.value = unspent_transaction.value - transaction.value
                 used_input_transactions.append(unspent_transaction)
+                if transaction.sender != transaction.receiver:
+                    if transaction.verify() == False:
+                        return False
 
     for transaction in used_input_transactions:
         if transaction.value != 0:
             return False
-            
+
     return True
                     
 

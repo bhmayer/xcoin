@@ -2,6 +2,8 @@ import datetime
 import helper
 import hashlib
 import json
+import nacl.signing
+import nacl.exceptions
 
 miner_reward = 0.1
 
@@ -124,6 +126,7 @@ class Transaction:
         self.number = -1
         self.input_value = 0
         self.hash = -1
+        self.signature = "0".encode("ascii")
     
     #Set which block the transaction has been recorded in
     def set_block (self, x):
@@ -133,27 +136,54 @@ class Transaction:
     def set_number (self, x):
         self.number = x
 
+    #add signature to transaction
+    def sign (self, signature):
+        self.signature = signature
+
+    #verify transaction
+    def verify (self):
+        try:
+            verify_key = nacl.signing.VerifyKey(self.sender, encoder=nacl.encoding.HexEncoder)
+            verify_key.verify(self.verify_dump().encode("ascii"), self.signature)
+        except nacl.exceptions.BadSignatureError:
+            return False
+        return True
+
     def set_input_value (self, x):
         self.input_value = x
 
     def set_hash (self):
-        hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number)
+        hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number) + str(self.signature)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
 
     #Converts transaction to JSON
     def dump(self):
-        data = [self.input_transaction_hash, self.value, self.sender, self.receiver, self.block, self.number, self.input_value, self.hash]
+        print("1")
+        x = self.sender.decode("ascii")
+        print("2")
+        x = self.receiver.decode("ascii")
+        print("3")
+        print (self.signature)
+        x= self.signature
+        print("4")
+        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature]
+        return json.dumps(data)
+
+    #Dump without signature for verification
+    def verify_dump(self):
+        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash]
         return json.dumps(data)
 
     #Load object from JSON
     @classmethod
     def from_json(cls, data):
         data = json.loads(data)
-        obj = cls(data[0], data[1], data[2], data[3])
+        obj = cls(data[0], data[1], data[2].encode("ascii"), data[3].encode("ascii"))
         obj.block = data[4]
         obj.number = data[5]
         obj.input_value = data[6]
         obj.hash = data[7]
+        obj.signature = data[8].encode("ascii")
         return obj
 
 

@@ -7,12 +7,20 @@ from twisted.internet.protocol import Factory, ClientFactory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor, stdio
 import json
+import nacl.encoding
+import nacl.signing
 
 #Import python ledger object, data type to be update to allow easier modifictaion
-ledger = pickle.load( open( "ledger.p", "rb" ) )
+ledger = pickle.load( open( "mirror/ledger.p", "rb" ) )
+
+#Import secret key
+seed = pickle.load( open("mirror/seed.p", "rb") )
+signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
+verify_key = signing_key.verify_key
+pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 
 #Enter address for node block rewards
-my_address = int(input("Enter your address: "))
+my_address = pubkey
 
 def nodeID(addr):
     """Helper function to create nodeid"""
@@ -93,10 +101,9 @@ class CommandProtocol(LineReceiver):
         self.sendLine(b'Goodbye.')
         self.transport.loseConnection()
 
-    def do_balance(self, address):
+    def do_balance(self):
         """Return balance of an address"""
-        address = int(address)
-        self.sendLine(b"Balance: " + str(factory.balance(address)).encode('ascii'))
+        self.sendLine(b"Balance: " + str(factory.balance(my_address)).encode('ascii'))
         
     def do_send(self, value, address):
         """Send value ammount"""
@@ -104,11 +111,16 @@ class CommandProtocol(LineReceiver):
         if value == 0:
             self.sendLine(b"Transaction must be non-zero")
             return
-        address = int(address)
+        address = address.encode("ascii")
         unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
         for unspent in unspent_transactions:
             if unspent.value >= value:
+                
                 new_transaction = Transaction(unspent.hash, value, my_address, address)
+                print(1)
+                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii")).signature
+                print("success")
+                new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return
         self.sendLine(b"No valid transactions")
@@ -120,6 +132,9 @@ class CommandProtocol(LineReceiver):
         """ Create new block """
         factory.update()
         self.sendLine(b"New block created")
+
+    def do_address(self):
+        self.sendLine(my_address)
 
     def do_status(self):
         self.sendLine(str(ledger.block_num()).encode('UTF-8'))
@@ -161,6 +176,7 @@ class NodeFactory(ClientFactory):
         return ledger.check_balance(address)
 
     def update(self):
+        print(ledger.current_block_hash())
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
             self.sendPeers(new_block)

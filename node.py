@@ -101,10 +101,9 @@ class CommandProtocol(LineReceiver):
         self.sendLine(b'Goodbye.')
         self.transport.loseConnection()
 
-    def do_balance(self, address):
+    def do_balance(self):
         """Return balance of an address"""
-        address = address.encode("ascii")
-        self.sendLine(b"Balance: " + str(factory.balance(address)).encode('ascii'))
+        self.sendLine(b"Balance: " + str(factory.balance(my_address)).encode('ascii'))
         
     def do_send(self, value, address):
         """Send value ammount"""
@@ -112,11 +111,13 @@ class CommandProtocol(LineReceiver):
         if value == 0:
             self.sendLine(b"Transaction must be non-zero")
             return
-        address = int(address)
+        address = address.encode("ascii")
         unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
         for unspent in unspent_transactions:
             if unspent.value >= value:
                 new_transaction = Transaction(unspent.hash, value, my_address, address)
+                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii")).signature
+                new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return
         self.sendLine(b"No valid transactions")
