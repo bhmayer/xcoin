@@ -5,14 +5,10 @@ import nacl.encoding
 import nacl.signing
 import nacl.bindings
 
-seed = "pxklcvaxrzgjxmscopjaqoscxkgskuwg"
-#public_key, secret_key = nacl.bindings.crypto_sign_seed_keypair(seed)
-
+seed = pickle.load( open("seed.p", "rb") )
 signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
 verify_key = signing_key.verify_key
 pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
-
-print (pubkey.decode("ascii").encode("ascii"))
 
 
 #Generate the first block of the chain
@@ -28,7 +24,6 @@ def genesis():
 ledger = genesis()
 
 pickle.dump(ledger, open( "ledger.p", "wb" ))
-pickle.dump(seed, open("seed.p", "wb"))
 
 
 
