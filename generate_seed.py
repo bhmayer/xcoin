@@ -4,7 +4,7 @@ import nacl.signing
 import nacl.bindings
 
 #Put 32 character string here
-seed = "00000000000000000000000000000000"
+seed = input("Input 32 character seed: ")
 
 signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
 verify_key = signing_key.verify_key
