@@ -9,6 +9,7 @@ from twisted.internet import reactor, stdio
 import json
 import nacl.encoding
 import nacl.signing
+from decimal import *
 
 #Import python ledger object, data type to be update to allow easier modifictaion
 ledger = pickle.load( open( "ledger.p", "rb" ) )
@@ -107,7 +108,7 @@ class CommandProtocol(LineReceiver):
         
     def do_send(self, value, address):
         """Send value ammount"""
-        value = float(value)
+        value = Decimal(value)
         if value == 0:
             self.sendLine(b"Transaction must be non-zero")
             return

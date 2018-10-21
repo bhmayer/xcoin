@@ -2,6 +2,7 @@ import hashlib
 import coin
 import copy
 import nacl
+from decimal import *
 
 #Function to get all transactions associated with an address
 def get_transactions_user (ledger, address):

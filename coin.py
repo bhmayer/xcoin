@@ -4,8 +4,9 @@ import hashlib
 import json
 import nacl.signing
 import nacl.exceptions
+from decimal import *
 
-miner_reward = 0.1
+miner_reward = Decimal("0.1")
 
 #Ledger class for holding blocks
 class Ledger:
@@ -128,7 +129,7 @@ class Transaction:
             input_transaction_hashes = [input_transaction_hashes]
             
         self.input_transaction_hashes = input_transaction_hashes
-        self.value = value
+        self.value = Decimal(value)
         self.sender = sender
         self.receiver = receiver
         self.block = -1
@@ -171,12 +172,12 @@ class Transaction:
 
     #Converts transaction to JSON
     def dump(self):
-        data = [self.input_transaction_hashes, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
+        data = [self.input_transaction_hashes, str(self.value), self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
         return json.dumps(data)
 
     #Dump without signature and block information for verification
     def verify_dump(self):
-        data = [self.input_transaction_hashes, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii")]
+        data = [self.input_transaction_hashes, str(self.value), self.sender.decode("ascii"), self.receiver.decode("ascii")]
         return json.dumps(data)
 
     #Load object from JSON
