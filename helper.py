@@ -138,14 +138,38 @@ def valid_block (block, ledger):
     unspent_transactions = get_unspent_transactions(ledger)
     used_input_transactions = []
     for transaction in block.transactions:
+        
+        #Check if non-change transactions have valid signature
+        if transaction.sender != transaction.receiver:
+            if transaction.verify() == False:
+                print("transaction not verified")
+                return False
+
+        #Check value of input transactions is sufficient for value of the transaction 
+        total = 0
+        inputs = []
         for unspent_transaction in unspent_transactions:
-            if transaction.input_transaction_hash == unspent_transaction.hash:
-                unspent_transaction.value = unspent_transaction.value - transaction.value
-                used_input_transactions.append(unspent_transaction)
-                if transaction.sender != transaction.receiver:
-                    if transaction.verify() == False:
-                        print("transaction not verified")
-                        return False
+            if unspent_transaction.hash in transaction.input_transaction_hashes:
+                #Make sure the sender owns the transaction
+                if unspent_transaction.receiver == transaction.sender:
+                    total = total + unspent_transaction.value
+                    inputs.append(unspent_transaction)
+
+        #Set new input_transaction values to generate change            
+        if total >= transaction.value:
+            for input_transaction in inputs:
+                if total > 0:
+                    if total >= input_transaction.value:
+                        total = total - input_transaction.value
+                        input_transaction.value = 0
+                    else:
+                        input_transaction.value = input_transaction.value - total
+                        total = 0
+                used_input_transactions.extend(inputs)
+        else:
+            return False
+        
+        
 
     for transaction in used_input_transactions:
         if transaction.value != 0:
