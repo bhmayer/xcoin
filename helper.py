@@ -53,7 +53,7 @@ def get_unspent_transactions_user(ledger, address):
     transactions = get_transactions_user(ledger, address)
     spent_transactions = []
     for transaction in transactions:
-        spent_transactions.append(transaction.input_transaction_hash)
+        spent_transactions.extend(transaction.input_transaction_hashes)
     
     unspent_transactions = []
     for transaction in transactions:
@@ -68,7 +68,7 @@ def get_unspent_transactions(ledger):
     spent_transactions = []
     for block in blocks:
         for transaction in block.transactions:
-            spent_transactions.append(transaction.input_transaction_hash)
+            spent_transactions.extend(transaction.input_transaction_hashes)
     
     unspent_transactions = []
     for block in blocks:
@@ -96,13 +96,34 @@ def process_block (block, ledger):
 
     #Iterate through and verify correct balance for input transactions
     for transaction in block.transactions:
+        
+        #Verify user signed transaction
         if transaction.verify():
+            
+            #Check value of input transactions is sufficient for value of the transaction 
+            total = 0
+            inputs = []
             for unspent_transaction in unspent_transactions:
-                if transaction.input_transaction_hash == unspent_transaction.hash:
-                    if transaction.value <= unspent_transaction.value:
-                        unspent_transaction.value = unspent_transaction.value - transaction.value
-                        valid_transactions.append(transaction)
-                        input_transactions.append(unspent_transaction)
+                if unspent_transaction.hash in transaction.input_transaction_hashes:
+                    
+                    #Make sure the sender owns the transaction
+                    if unspent_transaction.receiver == transaction.sender:
+                        total = total + unspent_transaction.value
+                        inputs.append(unspent_transaction)
+
+            #Set new input_transaction values to generate change            
+            if total >= transaction.value:
+                for input_transaction in inputs:
+                    if total > 0:
+                        if total >= input_transaction.value:
+                            total = total - input_transaction.value
+                            input_transaction.value = 0
+                        else:
+                            input_transaction.value = input_transaction.value - total
+                            total = 0
+                    input_transactions.extend(inputs)
+                valid_transactions.append(transaction)
+
 
     #Return change
     for transaction in input_transactions:
@@ -146,7 +167,7 @@ def return_change(block):
 
 #Return reward transaction for miner
 def reward(block, miner_reward):
-    reward_transaction = coin.Transaction(0, miner_reward, nacl.encoding.HexEncoder.encode(b"miner_reward"), block.processor)
+    reward_transaction = coin.Transaction("0", miner_reward, nacl.encoding.HexEncoder.encode(b"miner_reward"), block.processor)
     reward_transaction.sign(nacl.encoding.HexEncoder.encode(b"signed"))
     return reward_transaction
 

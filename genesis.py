@@ -14,7 +14,7 @@ pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 #Generate the first block of the chain
 def genesis():
     value = 1
-    genesis_transaction = Transaction(0, value, -1, pubkey)
+    genesis_transaction = Transaction("0", value, -1, pubkey)
     genesis_transactions = [genesis_transaction]
     genesis_block = Block(genesis_transactions, 0, 0)
     helper.label_transactions(genesis_block, 0)

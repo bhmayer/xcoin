@@ -121,8 +121,13 @@ class Block:
 
 #Transaction class representing the sending of coin
 class Transaction:
-    def __init__ (self, input_transaction_hash, value, sender, receiver):
-        self.input_transaction_hash = input_transaction_hash
+    def __init__ (self, input_transaction_hashes, value, sender, receiver):
+        
+        #Make array is input_transaction_hashes is inputed as string
+        if isinstance(input_transaction_hashes, str):
+            input_transaction_hashes = [input_transaction_hashes]
+            
+        self.input_transaction_hashes = input_transaction_hashes
         self.value = value
         self.sender = sender
         self.receiver = receiver
@@ -161,17 +166,17 @@ class Transaction:
 
     #Set the hash for the transaction
     def set_hash (self):
-        hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number) + str(self.signature)
+        hash_value = str(self.input_transaction_hashes) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number) + str(self.signature)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
 
     #Converts transaction to JSON
     def dump(self):
-        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
+        data = [self.input_transaction_hashes, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
         return json.dumps(data)
 
     #Dump without signature and block information for verification
     def verify_dump(self):
-        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii")]
+        data = [self.input_transaction_hashes, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii")]
         return json.dumps(data)
 
     #Load object from JSON

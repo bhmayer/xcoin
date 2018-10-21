@@ -113,14 +113,18 @@ class CommandProtocol(LineReceiver):
             return
         address = address.encode("ascii")
         unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
+        total = 0
+        input_transactions = []
         for unspent in unspent_transactions:
-            if unspent.value >= value:
-                new_transaction = Transaction(unspent.hash, value, my_address, address)
+            total = total + unspent.value
+            input_transactions.append(unspent.hash)
+            if total >= value:
+                new_transaction = Transaction(input_transactions, value, my_address, address)
                 signature = signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
                 new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return
-        self.sendLine(b"No valid transactions")
+        self.sendLine(b"Insufficient balance")
 
     def do_bootstrap(self):
         reactor.connectTCP("127.0.0.1", 8124, factory)
