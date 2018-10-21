@@ -116,7 +116,7 @@ class CommandProtocol(LineReceiver):
         for unspent in unspent_transactions:
             if unspent.value >= value:
                 new_transaction = Transaction(unspent.hash, value, my_address, address)
-                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii")).signature
+                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
                 new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return

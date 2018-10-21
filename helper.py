@@ -1,6 +1,7 @@
 import hashlib
 import coin
 import copy
+import nacl
 
 #Function to get all transactions associated with an address
 def get_transactions_user (ledger, address):
@@ -143,7 +144,9 @@ def return_change(block):
 
 #Return reward transaction for miner
 def reward(block, miner_reward):
-    return coin.Transaction(0, miner_reward, -1, block.processor)
+    reward_transaction = coin.Transaction(0, miner_reward, nacl.encoding.HexEncoder.encode(b"miner_reward"), block.processor)
+    reward_transaction.sign(nacl.encoding.HexEncoder.encode(b"signed"))
+    return reward_transaction
 
 
         

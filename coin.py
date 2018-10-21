@@ -44,7 +44,7 @@ class Ledger:
         if helper.valid_block(block, self) == False:
             return False
 
-        #Check if reward is valid
+        #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
         if reward_transaction.value != miner_reward:
             return False
 
@@ -144,14 +144,18 @@ class Transaction:
     def verify (self):
         try:
             verify_key = nacl.signing.VerifyKey(self.sender, encoder=nacl.encoding.HexEncoder)
-            verify_key.verify(self.verify_dump().encode("ascii"), self.signature)
+            message = nacl.encoding.HexEncoder.encode(self.verify_dump().encode("ascii"))
+            verify_key.verify(message, self.signature, encoder=nacl.encoding.HexEncoder)
         except nacl.exceptions.BadSignatureError:
+            print("invalid transaction")
             return False
         return True
 
+    #Set the input_value of the function
     def set_input_value (self, x):
         self.input_value = x
 
+    #Set the hash for the transaction
     def set_hash (self):
         hash_value = str(self.input_transaction_hash) + str(self.value) + str(self.sender) + str(self.receiver) + str(self.block) + str(self.number) + str(self.signature)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
@@ -160,13 +164,15 @@ class Transaction:
     def dump(self):
         print("1")
         x = self.sender.decode("ascii")
+        print(self.sender)
         print("2")
         x = self.receiver.decode("ascii")
         print("3")
-        print (self.signature)
+        print (self.signature.decode("ascii"))
+        print(type(self.signature))
         x= self.signature
         print("4")
-        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature]
+        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
         return json.dumps(data)
 
     #Dump without signature for verification
