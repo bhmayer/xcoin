@@ -173,7 +173,6 @@ class NodeFactory(ClientFactory):
         return ledger.check_balance(address)
 
     def update(self):
-        print(ledger.current_block_hash())
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
             self.sendPeers(new_block)

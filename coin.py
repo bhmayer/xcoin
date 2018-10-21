@@ -30,11 +30,10 @@ class Ledger:
 
     #Add new block sent from another node
     def add (self, block):
-        print(self.current_block_hash())
-        print(block.prev_hash)
 
         #Check if we are in the right part of the tree
         if self.current_block_hash() != block.prev_hash:
+            print("incorrect hash")
             return False
 
         #Pop reward transaction from last part of the node
@@ -42,10 +41,12 @@ class Ledger:
 
         #Check if transactions are valid
         if helper.valid_block(block, self) == False:
+            print("invalid transactions")
             return False
 
         #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
         if reward_transaction.value != miner_reward:
+            ("miner reward incorrect")
             return False
 
         #Add back reward transaction
@@ -56,6 +57,7 @@ class Ledger:
         hash = block.hash
         block.set_hash()
         if block.hash != hash:
+            print("could not duplicate hash")
             return False
 
         self.blocks.append(block)
@@ -81,9 +83,11 @@ class Block:
         self.prev_hash = prev_hash
         self.hash = -1
 
+    #Extends transactions for block processing
     def extend_transactions(self, x):
         self.transactions.extend(x)
 
+    #Set hash of the block
     def set_hash(self):
         hash_value = str(self.timestamp) + str(self.processor) + str(self.prev_hash)
         for transaction in self.transactions:
@@ -92,7 +96,7 @@ class Block:
 
     #Converts block to JSON
     def dump(self):
-        block_data = [self.timestamp, self.processor, self.prev_hash, self.hash]
+        block_data = [self.timestamp, self.processor.decode("ascii"), self.prev_hash, self.hash]
         transaction_data = []
         for transaction in self.transactions:
             transaction_data.append(transaction.dump())
@@ -108,7 +112,7 @@ class Block:
         transactions = []
         for transaction in transaction_data:
             transactions.append(Transaction.from_json(transaction))
-        block = cls(transactions, block_data[1], block_data[2])
+        block = cls(transactions, block_data[1].encode("ascii"), block_data[2])
         block.timestamp = block_data[0]
         block.hash = block_data[3]
         return block
@@ -151,7 +155,7 @@ class Transaction:
             return False
         return True
 
-    #Set the input_value of the function
+    #Set the input_value of the function, can this functionality be removed?
     def set_input_value (self, x):
         self.input_value = x
 
@@ -162,22 +166,12 @@ class Transaction:
 
     #Converts transaction to JSON
     def dump(self):
-        print("1")
-        x = self.sender.decode("ascii")
-        print(self.sender)
-        print("2")
-        x = self.receiver.decode("ascii")
-        print("3")
-        print (self.signature.decode("ascii"))
-        print(type(self.signature))
-        x= self.signature
-        print("4")
         data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash, self.signature.decode("ascii")]
         return json.dumps(data)
 
-    #Dump without signature for verification
+    #Dump without signature and block information for verification
     def verify_dump(self):
-        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii"), self.block, self.number, self.input_value, self.hash]
+        data = [self.input_transaction_hash, self.value, self.sender.decode("ascii"), self.receiver.decode("ascii")]
         return json.dumps(data)
 
     #Load object from JSON

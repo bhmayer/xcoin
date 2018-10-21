@@ -123,10 +123,12 @@ def valid_block (block, ledger):
                 used_input_transactions.append(unspent_transaction)
                 if transaction.sender != transaction.receiver:
                     if transaction.verify() == False:
+                        print("transaction not verified")
                         return False
 
     for transaction in used_input_transactions:
         if transaction.value != 0:
+            print("incorrect change")
             return False
 
     return True

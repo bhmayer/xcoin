@@ -11,7 +11,7 @@ import nacl.encoding
 import nacl.signing
 
 #Import python ledger object, data type to be update to allow easier modifictaion
-ledger = pickle.load( open( "mirror/ledger.p", "rb" ) )
+ledger = pickle.load( open( "ledger.p", "rb" ) )
 
 #Import secret key
 seed = pickle.load( open("mirror/seed.p", "rb") )
@@ -112,14 +112,12 @@ class CommandProtocol(LineReceiver):
             self.sendLine(b"Transaction must be non-zero")
             return
         address = address.encode("ascii")
+        print(address)
         unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
         for unspent in unspent_transactions:
             if unspent.value >= value:
-                
                 new_transaction = Transaction(unspent.hash, value, my_address, address)
-                print(1)
-                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii")).signature
-                print("success")
+                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
                 new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return
