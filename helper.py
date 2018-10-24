@@ -196,6 +196,14 @@ def reward(block, miner_reward):
     reward_transaction.sign(nacl.encoding.HexEncoder.encode(b"signed"))
     return reward_transaction
 
+#Check if reward transaction is valid, ensures not sending from another users or transactions
+def valid_reward(transaction, miner_reward):
+   x = transaction.value == miner_reward
+   y = transaction.sender == nacl.encoding.HexEncoder.encode(b"miner_reward")
+   z = transaction.input_transaction_hashes == ["0"]
+   return x and y and z
+
+
 
         
         

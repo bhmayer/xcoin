@@ -46,7 +46,7 @@ class Ledger:
             return False
 
         #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
-        if reward_transaction.value != miner_reward:
+        if helper.valid_reward(reward_transaction, miner_reward):
             ("miner reward incorrect")
             return False
 
