@@ -46,8 +46,8 @@ class Ledger:
             return False
 
         #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
-        if helper.valid_reward(reward_transaction, miner_reward):
-            ("miner reward incorrect")
+        if helper.valid_reward(reward_transaction, miner_reward) == False:
+            print("miner reward incorrect")
             return False
 
         #Add back reward transaction
