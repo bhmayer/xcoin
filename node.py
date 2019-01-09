@@ -11,11 +11,30 @@ import nacl.encoding
 import nacl.signing
 from decimal import *
 
+
+#Set configuration for the node, allows node mirroring
+response = input("Normal or mirror:")
+answer = response[0].lower()
+
+if answer == "n":
+    ledger_dir = "ledger.p"
+    seed_dir = "seed.p"
+    PORT = 8123
+    PEER_PORT = 8124
+elif answer == "m":
+    ledger_dir = "mirror/ledger.p"
+    seed_dir = "mirror/seed.p"
+    PORT = 8124
+    PEER_PORT = 8123
+else:
+    raise ValueError('Invalid reponse, please enter n for normal or m for mirror')
+
+
 #Import python ledger object, data type to be updated to allow easier modifictaion
-ledger = pickle.load( open( "ledger.p", "rb" ) )
+ledger = pickle.load( open(ledger_dir, "rb" ) )
 
 #Import secret key
-seed = pickle.load( open("seed.p", "rb") )
+seed = pickle.load( open(seed_dir, "rb") )
 signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
 verify_key = signing_key.verify_key
 pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
@@ -132,7 +151,7 @@ class CommandProtocol(LineReceiver):
 
     def do_bootstrap(self):
         """ Make connection to mirror node """
-        reactor.connectTCP("127.0.0.1", 8124, factory)
+        reactor.connectTCP("127.0.0.1", PEER_PORT, factory)
 
     def do_update(self):
         """ Create new block """
@@ -216,5 +235,5 @@ class NodeFactory(ClientFactory):
 
 factory = NodeFactory()
 stdio.StandardIO(factory.buildCommandProtocol())
-reactor.listenTCP(8123, factory)
+reactor.listenTCP(PORT, factory)
 reactor.run()
