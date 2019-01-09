@@ -11,7 +11,7 @@ import nacl.encoding
 import nacl.signing
 from decimal import *
 
-#Import python ledger object, data type to be update to allow easier modifictaion
+#Import python ledger object, data type to be updated to allow easier modifictaion
 ledger = pickle.load( open( "ledger.p", "rb" ) )
 
 #Import secret key
@@ -128,6 +128,7 @@ class CommandProtocol(LineReceiver):
         self.sendLine(b"Insufficient balance")
 
     def do_bootstrap(self):
+        """ Make connection to mirror node """
         reactor.connectTCP("127.0.0.1", 8124, factory)
 
     def do_update(self):
@@ -178,6 +179,7 @@ class NodeFactory(ClientFactory):
         return ledger.check_balance(address)
 
     def update(self):
+        """ Add a new block to the ledger will be replace with mining """
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
             self.sendPeers(new_block)
