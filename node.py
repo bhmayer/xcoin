@@ -62,17 +62,35 @@ class NodeProtocol(LineReceiver):
     def connectionLost(self, reason):
         self.state = "OLD"
 
+    def sendData(self, code, data):
+        data = [code, data]
+        message = json.dumps(data)
+        self.sendLine(message.encode("ascii"))
+
     def lineReceived(self, line):
         line = line.decode("ascii")
         message = json.loads(line)
         print("message_received")
-        if message[0] == 0:
-            self.factory.newBlock(message[1])
 
-    def sendObject(self, data):
-        data = [0, data]
-        message = json.dumps(data)
-        self.sendLine(message.encode("ascii"))
+        # Dispatch the command to the appropriate method.  Note that all you
+        # need to do to implement a new command is add another do_* method.
+        command = message[0]
+        data = message[1]
+
+        try:
+            method = getattr(self, 'do_' + command)
+        except:
+            pass
+        else:
+            try:
+                method(data)
+            except Exception as e:
+                pass
+
+    def do_newBlock(self, data):
+        self.factory.newBlock(data)
+
+
 
 class CommandProtocol(LineReceiver):
     """Protocol for receiving input from the command line"""
@@ -206,7 +224,7 @@ class NodeFactory(ClientFactory):
         """ Add a new block to the ledger will be replace with mining """
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
-            self.sendPeers(new_block)
+            self.sendPeers("newBlock", new_block)
         else:
             print("Invalid block")
         self.new_transactions = []
@@ -222,9 +240,9 @@ class NodeFactory(ClientFactory):
         except Exception as e:
             print(e)
     
-    def sendPeers(self, data):
+    def sendPeers(self, code, data):
         for peer in self.peers:
-            self.peers[peer].sendObject(data.dump())
+            self.peers[peer].sendData(code, data.dump())
 
     def listPeers(self):
         for peer in self.peers:
