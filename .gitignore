@@ -10,6 +10,7 @@ __pycache__/
 mirror
 ledger.p
 seed.p
+xcoin.code-workspace
 
 #dsstore
 .DS_Store
