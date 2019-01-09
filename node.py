@@ -63,19 +63,21 @@ class NodeProtocol(LineReceiver):
         self.state = "OLD"
 
     def sendData(self, code, data):
-        data = [code, data]
-        message = json.dumps(data)
+        message_data = [code, data]
+        message = json.dumps(message_data)
         self.sendLine(message.encode("ascii"))
 
     def lineReceived(self, line):
         line = line.decode("ascii")
         message = json.loads(line)
-        print("message_received")
+        
 
         # Dispatch the command to the appropriate method.  Note that all you
         # need to do to implement a new command is add another do_* method.
         command = message[0]
         data = message[1]
+        print("message_received: " + command)
+
 
         try:
             method = getattr(self, 'do_' + command)
@@ -90,6 +92,20 @@ class NodeProtocol(LineReceiver):
     def do_newBlock(self, data):
         self.factory.newBlock(data)
 
+    def do_returnNextBlock(self, hash_value):
+        """ Return the next block after the current hash """
+        print("returnNextBlockFunction")
+        break_next_cycle = False
+
+        for block in ledger.blocks:
+            print(block.hash)
+            if break_next_cycle == True:
+                "Breaking cycle"
+                self.sendData("newBlock", block.dump())
+                break
+            elif block.hash == hash_value:
+                print("successful match")
+                break_next_cycle = True
 
 
 class CommandProtocol(LineReceiver):
@@ -177,11 +193,17 @@ class CommandProtocol(LineReceiver):
         self.sendLine(b"New block created")
 
     def do_address(self):
+        """ Return the address for the node """
         self.sendLine(my_address)
 
     def do_status(self):
+        """ Check current status of the node """
         self.sendLine(str(ledger.block_num()).encode('UTF-8'))
         self.sendLine(str(ledger.current_block_hash()).encode('UTF-8'))
+
+    def do_get(self):
+        """ For testing, allows me to request the next block """
+        factory.get()
 
     def __checkSuccess(self, pageData):
         msg = "Success: got {} bytes.".format(len(pageData))
@@ -224,7 +246,7 @@ class NodeFactory(ClientFactory):
         """ Add a new block to the ledger will be replace with mining """
         new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
         if ledger.update(new_block):
-            self.sendPeers("newBlock", new_block)
+            self.sendPeers("newBlock", new_block.dump())
         else:
             print("Invalid block")
         self.new_transactions = []
@@ -242,11 +264,15 @@ class NodeFactory(ClientFactory):
     
     def sendPeers(self, code, data):
         for peer in self.peers:
-            self.peers[peer].sendData(code, data.dump())
+            self.peers[peer].sendData(code, data)
 
     def listPeers(self):
         for peer in self.peers:
             print(peer)
+
+    def get(self):
+        """ Requests new block, for testing """
+        self.sendPeers("returnNextBlock", ledger.current_block_hash())
 
         
 
