@@ -28,6 +28,7 @@ def nodeID(addr):
     return addr.host + str(addr.port)
 
 class NodeProtocol(LineReceiver):
+    """ Protocol for each individual peer connection """
 
     def __init__(self, addr, factory):
         self.state = "NEW"
@@ -55,6 +56,8 @@ class NodeProtocol(LineReceiver):
         self.sendLine(message.encode("ascii"))
 
 class CommandProtocol(LineReceiver):
+    """Protocol for receiving input from the command line"""
+
     delimiter = b'\n' # unix terminal style newlines. remove this line
                       # for use with Telnet
 
@@ -173,9 +176,11 @@ class NodeFactory(ClientFactory):
         return self.cmd_line
 
     def userOutput(self, msg):
+        """ Output a message through the command line """
         self.cmd_line.sendLine(msg.encode("ascii"))
 
     def balance(self, address):
+        """ Return the balance of an address """
         return ledger.check_balance(address)
 
     def update(self):
