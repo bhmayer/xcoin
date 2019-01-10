@@ -6,6 +6,7 @@ import helper
 from twisted.internet.protocol import Factory, ClientFactory
 from twisted.protocols.basic import LineReceiver
 from twisted.internet import reactor, stdio
+from twisted.internet.task import LoopingCall
 import json
 import nacl.encoding
 import nacl.signing
@@ -79,7 +80,7 @@ class NodeProtocol(LineReceiver):
         # need to do to implement a new command is add another do_* method.
         command = message[0]
         data = message[1]
-        print("message_received: " + command)
+        #print("message_received: " + command)
 
 
         try:
@@ -111,11 +112,10 @@ class NodeProtocol(LineReceiver):
                 break_next_cycle = True
     
     def do_ping(self, data):
-        print("ping")
         self.sendData("pong", "")
     
     def do_pong(self, data):
-        print ("pong")
+        pass
 
 class CommandProtocol(LineReceiver):
     """Protocol for receiving input from the command line"""
@@ -290,10 +290,17 @@ class NodeFactory(ClientFactory):
         for peer in self.peers:
             self.peers[peer].sendPing()
 
-        
+def maintainPeerList(factory):
+    """ Looping call function for maintaing a list of peers """
+    factory.pingPeers()
+
 
 
 factory = NodeFactory()
 stdio.StandardIO(factory.buildCommandProtocol())
+
+lc = LoopingCall(maintainPeerList, factory)
+lc.start(5)
+
 reactor.listenTCP(PORT, factory)
 reactor.run()
