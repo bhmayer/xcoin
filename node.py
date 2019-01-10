@@ -30,6 +30,9 @@ elif answer == "m":
 else:
     raise ValueError('Invalid reponse, please enter n for normal or m for mirror')
 
+#Set configuration for network settings
+PEER_LIST_SIZE = 30
+
 
 #Import python ledger object, data type to be updated to allow easier modifictaion
 ledger = pickle.load( open(ledger_dir, "rb" ) )
@@ -71,6 +74,11 @@ class NodeProtocol(LineReceiver):
     def sendPing(self):
         self.sendData("ping", "")
 
+    def requestPeers(self):
+        """ Request peer list from another node """
+        print("Requesting")
+        self.sendData("sendPeers", "")
+
     def lineReceived(self, line):
         line = line.decode("ascii")
         message = json.loads(line)
@@ -97,25 +105,39 @@ class NodeProtocol(LineReceiver):
         self.factory.newBlock(data)
 
     def do_returnNextBlock(self, hash_value):
-        """ Return the next block after the current hash """
-        print("returnNextBlockFunction")
+        """ Return the next block after the provided hash """
+
         break_next_cycle = False
 
         for block in ledger.blocks:
-            print(block.hash)
             if break_next_cycle == True:
-                "Breaking cycle"
+                """Breaking cycle""""
                 self.sendData("newBlock", block.dump())
                 break
             elif block.hash == hash_value:
-                print("successful match")
                 break_next_cycle = True
     
     def do_ping(self, data):
         self.sendData("pong", "")
     
     def do_pong(self, data):
+        #Make this mark the peer for no deletion
         pass
+
+    def do_sendPeers(self,data):
+        """ Respond to a request for a peer list """
+
+        peerList = []
+
+        for peer in self.factory.peers:
+            peerList.append(peer)
+
+        self.sendData("receivePeers", peerList)
+
+    def do_receivePeers(self,data):
+        """ Receive peers from another node """
+        
+        self.factory.receivePeers(data)
 
 class CommandProtocol(LineReceiver):
     """Protocol for receiving input from the command line"""
@@ -198,7 +220,7 @@ class CommandProtocol(LineReceiver):
 
     def do_update(self):
         """ Create new block """
-        factory.update()
+        self.factory.update()
         self.sendLine(b"New block created")
 
     def do_address(self):
@@ -212,7 +234,7 @@ class CommandProtocol(LineReceiver):
 
     def do_get(self):
         """ For testing, allows me to request the next block """
-        factory.get()
+        self.factory.get()
 
     def __checkSuccess(self, pageData):
         msg = "Success: got {} bytes.".format(len(pageData))
@@ -227,10 +249,12 @@ class CommandProtocol(LineReceiver):
         reactor.stop()
 
     def do_list(self):
-        factory.listPeers()
+        self.factory.listPeers()
 
-    def do_ping(self):
-        factory.pingPeers()
+    def do_test(self):
+        """ test command for debugging current problem """
+        self.factory.test()
+
 
 class NodeFactory(ClientFactory):
     def __init__(self):
@@ -289,6 +313,15 @@ class NodeFactory(ClientFactory):
     def pingPeers(self):
         for peer in self.peers:
             self.peers[peer].sendPing()
+
+    def test(self):
+        """ for trigering code that will be put on a looping call """
+        for peer in self.peers:
+             self.peers[peer].requestPeers() 
+    
+    def receivePeers(self, data):
+        for peer in data:
+            print(peer)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
