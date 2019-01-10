@@ -67,6 +67,9 @@ class NodeProtocol(LineReceiver):
         message = json.dumps(message_data)
         self.sendLine(message.encode("ascii"))
 
+    def sendPing(self):
+        self.sendData("ping", "")
+
     def lineReceived(self, line):
         line = line.decode("ascii")
         message = json.loads(line)
@@ -106,7 +109,13 @@ class NodeProtocol(LineReceiver):
             elif block.hash == hash_value:
                 print("successful match")
                 break_next_cycle = True
-
+    
+    def do_ping(self, data):
+        print("ping")
+        self.sendData("pong", "")
+    
+    def do_pong(self, data):
+        print ("pong")
 
 class CommandProtocol(LineReceiver):
     """Protocol for receiving input from the command line"""
@@ -220,6 +229,9 @@ class CommandProtocol(LineReceiver):
     def do_list(self):
         factory.listPeers()
 
+    def do_ping(self):
+        factory.pingPeers()
+
 class NodeFactory(ClientFactory):
     def __init__(self):
         self.new_transactions = []
@@ -273,6 +285,10 @@ class NodeFactory(ClientFactory):
     def get(self):
         """ Requests new block, for testing """
         self.sendPeers("returnNextBlock", ledger.current_block_hash())
+
+    def pingPeers(self):
+        for peer in self.peers:
+            self.peers[peer].sendPing()
 
         
 
