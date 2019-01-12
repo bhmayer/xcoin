@@ -19,13 +19,18 @@ import argparse
 
 #Parse command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--mirror", help="run node as a mirror",
-                    action="store_true")
+parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
+parser.add_argument("-d", "--docker", help="run node for a detached docker environment", action="store_true")
 args = parser.parse_args()
 if args.mirror:
     ledger_dir = "mirror/ledger.p"
     seed_dir = "mirror/seed.p"
     PORT = 8124
+    PEER_PORT = 8123
+elif args.docker:
+    ledger_dir = "ledger.p"
+    seed_dir = "seed.p"
+    PORT = 8123
     PEER_PORT = 8123
 else:
     ledger_dir = "ledger.p"
@@ -318,26 +323,31 @@ class NodeFactory(ClientFactory):
         for peer in self.peers:
             self.peers[peer].sendPing()
 
-    def test(self):
+    def requestPeers(self):
         """ for trigering code that will be put on a looping call """
         for peer in self.peers:
              self.peers[peer].requestPeers() 
     
     def receivePeers(self, data):
         for peer in data:
-            print(peer)
+            if peer not in self.peers.keys():
+                print(peer)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
-    factory.pingPeers()
-
+    factory.requestPeers()
 
 
 factory = NodeFactory()
-stdio.StandardIO(factory.buildCommandProtocol())
 
-lc = LoopingCall(maintainPeerList, factory)
-lc.start(5)
+if args.docker:
+    reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
+else:
+    stdio.StandardIO(factory.buildCommandProtocol())
+
+if args.mirror:
+    lc = LoopingCall(maintainPeerList, factory)
+    lc.start(5)
 
 reactor.listenTCP(PORT, factory)
 reactor.run()
