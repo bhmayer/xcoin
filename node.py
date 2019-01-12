@@ -15,24 +15,24 @@ import json
 import nacl.encoding
 import nacl.signing
 from decimal import *
+import argparse
 
-
-#Set configuration for the node, allows node mirroring
-response = input("Normal or mirror:")
-answer = response[0].lower()
-
-if answer == "n":
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8124
-elif answer == "m":
+#Parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--mirror", help="run node as a mirror",
+                    action="store_true")
+args = parser.parse_args()
+if args.mirror:
     ledger_dir = "mirror/ledger.p"
     seed_dir = "mirror/seed.p"
     PORT = 8124
     PEER_PORT = 8123
 else:
-    raise ValueError('Invalid reponse, please enter n for normal or m for mirror')
+    ledger_dir = "ledger.p"
+    seed_dir = "seed.p"
+    PORT = 8123
+    PEER_PORT = 8124
+
 
 #Set configuration for network settings
 PEER_LIST_SIZE = 30
