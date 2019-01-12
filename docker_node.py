@@ -37,7 +37,7 @@ my_address = pubkey
 
 def nodeID(addr):
     """Helper function to create nodeid"""
-    return addr.host + str(addr.port)
+    return addr.host + "_" +str(addr.port)
 
 class NodeProtocol(LineReceiver):
     """ Protocol for each individual peer connection """
