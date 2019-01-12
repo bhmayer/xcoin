@@ -13,22 +13,11 @@ import nacl.signing
 from decimal import *
 
 
-#Set configuration for the node, allows node mirroring
-response = input("Normal or mirror:")
-answer = response[0].lower()
 
-if answer == "n":
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8124
-elif answer == "m":
-    ledger_dir = "mirror/ledger.p"
-    seed_dir = "mirror/seed.p"
-    PORT = 8124
-    PEER_PORT = 8123
-else:
-    raise ValueError('Invalid reponse, please enter n for normal or m for mirror')
+ledger_dir = "ledger.p"
+seed_dir = "seed.p"
+PORT = 8123
+PEER_PORT = 8123
 
 #Set configuration for network settings
 PEER_LIST_SIZE = 30
@@ -330,10 +319,11 @@ def maintainPeerList(factory):
 
 
 factory = NodeFactory()
-stdio.StandardIO(factory.buildCommandProtocol())
+#stdio.StandardIO(factory.buildCommandProtocol())
 
 lc = LoopingCall(maintainPeerList, factory)
 lc.start(5)
 
 reactor.listenTCP(PORT, factory)
+reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
 reactor.run()
