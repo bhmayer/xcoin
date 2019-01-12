@@ -1,3 +1,9 @@
+"""
+
+Helper functions for the coin.py blockchain data structure file
+
+"""
+
 import hashlib
 import coin
 import copy

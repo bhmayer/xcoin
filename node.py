@@ -1,4 +1,8 @@
-#Python file for running node
+"""
+Protocols and classes for running a node on the network
+"""
+
+
 from coin import Ledger, Block, Transaction
 import pickle
 import hashlib

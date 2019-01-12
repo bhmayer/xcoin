@@ -1,3 +1,9 @@
+"""
+
+Program to create the genesis block
+
+"""
+
 from coin import Block, Transaction, Ledger
 import pickle
 import helper

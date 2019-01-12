@@ -1,3 +1,9 @@
+"""
+
+The blockchain data structure
+
+"""
+
 import datetime
 import helper
 import hashlib

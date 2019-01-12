@@ -1,3 +1,9 @@
+"""
+
+File for generating seeds for the node
+
+"""
+
 import pickle
 import nacl.encoding
 import nacl.signing
