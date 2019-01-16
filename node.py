@@ -15,45 +15,6 @@ import json
 import nacl.encoding
 import nacl.signing
 from decimal import *
-import argparse
-
-#Parse command line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
-parser.add_argument("-d", "--docker", help="run node for a detached docker environment", action="store_true")
-args = parser.parse_args()
-if args.mirror:
-    ledger_dir = "mirror/ledger.p"
-    seed_dir = "mirror/seed.p"
-    PORT = 8124
-    PEER_PORT = 8123
-elif args.docker:
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8123
-else:
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8124
-
-
-#Set configuration for network settings
-PEER_LIST_SIZE = 30
-
-
-#Import python ledger object, data type to be updated to allow easier modifictaion
-ledger = pickle.load( open(ledger_dir, "rb" ) )
-
-#Import secret key
-seed = pickle.load( open(seed_dir, "rb") )
-signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
-verify_key = signing_key.verify_key
-pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
-
-#Enter address for node block rewards
-my_address = pubkey
 
 def nodeID(addr):
     """Helper function to create nodeid"""
@@ -118,7 +79,7 @@ class NodeProtocol(LineReceiver):
 
         break_next_cycle = False
 
-        for block in ledger.blocks:
+        for block in self.factory.ledger.blocks:
             if break_next_cycle == True:
                 """Breaking cycle"""
                 self.sendData("newBlock", block.dump())
@@ -200,7 +161,7 @@ class CommandProtocol(LineReceiver):
 
     def do_balance(self):
         """Return balance of an address"""
-        self.sendLine(b"Balance: " + str(factory.balance(my_address)).encode('ascii'))
+        self.sendLine(b"Balance: " + str(self.factory.balance(self.factory.my_address)).encode('ascii'))
         
     def do_send(self, value, address):
         """Send value ammount"""
@@ -209,15 +170,15 @@ class CommandProtocol(LineReceiver):
             self.sendLine(b"Transaction must be non-zero")
             return
         address = address.encode("ascii")
-        unspent_transactions = helper.get_unspent_transactions_user(ledger, my_address)
+        unspent_transactions = helper.get_unspent_transactions_user(self.factory.ledger, self.factory.my_address)
         total = 0
         input_transactions = []
         for unspent in unspent_transactions:
             total = total + unspent.value
             input_transactions.append(unspent.hash)
             if total >= value:
-                new_transaction = Transaction(input_transactions, value, my_address, address)
-                signature = signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
+                new_transaction = Transaction(input_transactions, value, self.factory.my_address, address)
+                signature = self.factory.signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
                 new_transaction.sign(signature)
                 self.factory.new_transactions.append(new_transaction)
                 return
@@ -225,7 +186,7 @@ class CommandProtocol(LineReceiver):
 
     def do_bootstrap(self):
         """ Make connection to mirror node """
-        reactor.connectTCP("127.0.0.1", PEER_PORT, factory)
+        self.factory.reactor.connectTCP("127.0.0.1", self.factory.PEER_PORT, self.factory)
 
     def do_update(self):
         """ Create new block """
@@ -234,12 +195,12 @@ class CommandProtocol(LineReceiver):
 
     def do_address(self):
         """ Return the address for the node """
-        self.sendLine(my_address)
+        self.sendLine(self.factory.my_address)
 
     def do_status(self):
         """ Check current status of the node """
-        self.sendLine(str(ledger.block_num()).encode('UTF-8'))
-        self.sendLine(str(ledger.current_block_hash()).encode('UTF-8'))
+        self.sendLine(str(self.factory.ledger.block_num()).encode('UTF-8'))
+        self.sendLine(str(self.factory.ledger.current_block_hash()).encode('UTF-8'))
 
     def do_get(self):
         """ For testing, allows me to request the next block """
@@ -255,7 +216,7 @@ class CommandProtocol(LineReceiver):
 
     def connectionLost(self, reason):
         # stop the reactor, only because this is meant to be run in Stdio.
-        reactor.stop()
+        self.factory.reactor.stop()
 
     def do_list(self):
         self.factory.listPeers()
@@ -266,9 +227,14 @@ class CommandProtocol(LineReceiver):
 
 
 class NodeFactory(ClientFactory):
-    def __init__(self):
+    def __init__(self, input_reactor, ledger, my_address, signing_key, PEER_PORT):
         self.new_transactions = []
         self.peers = {}
+        self.reactor = input_reactor
+        self.ledger = ledger
+        self.my_address = my_address
+        self.signing_key = signing_key
+        self.PEER_PORT = PEER_PORT
 
     def buildProtocol(self, addr):
         newProtocol = NodeProtocol(addr, self)
@@ -285,12 +251,12 @@ class NodeFactory(ClientFactory):
 
     def balance(self, address):
         """ Return the balance of an address """
-        return ledger.check_balance(address)
+        return self.ledger.check_balance(address)
 
     def update(self):
         """ Add a new block to the ledger will be replace with mining """
-        new_block = Block(self.new_transactions, my_address, ledger.current_block_hash())
-        if ledger.update(new_block):
+        new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash())
+        if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
         else:
             print("Invalid block")
@@ -299,7 +265,7 @@ class NodeFactory(ClientFactory):
     def newBlock(self, block):
         try:
             block = Block.from_json(block)
-            if ledger.add(block):
+            if self.ledger.add(block):
                 print("Received new block!")
             else:
                 print("Invalid block")
@@ -317,7 +283,7 @@ class NodeFactory(ClientFactory):
 
     def get(self):
         """ Requests new block, for testing """
-        self.sendPeers("returnNextBlock", ledger.current_block_hash())
+        self.sendPeers("returnNextBlock", self.ledger.current_block_hash())
 
     def pingPeers(self):
         for peer in self.peers:
@@ -333,22 +299,9 @@ class NodeFactory(ClientFactory):
             print(peer)
             if peer not in self.peers.keys():
                 peer_ip = peer.split("_")[0]
-                reactor.connectTCP(peer_ip, PEER_PORT, factory)
+                self.reactor.connectTCP(peer_ip, self.PEER_PORT, self.factory)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
     factory.requestPeers()
 
-factory = NodeFactory()
-
-if args.docker:
-    reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
-else:
-    stdio.StandardIO(factory.buildCommandProtocol())
-
-if args.mirror:
-    lc = LoopingCall(maintainPeerList, factory)
-    lc.start(5)
-
-reactor.listenTCP(PORT, factory)
-reactor.run()
