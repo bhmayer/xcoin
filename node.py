@@ -57,7 +57,7 @@ my_address = pubkey
 
 def nodeID(addr):
     """Helper function to create nodeid"""
-    return addr.host + "_" +str(addr.port)
+    return addr.host + "_" + str(addr.port)
 
 class NodeProtocol(LineReceiver):
     """ Protocol for each individual peer connection """
@@ -330,10 +330,10 @@ class NodeFactory(ClientFactory):
     
     def receivePeers(self, data):
         for peer in data:
+            print(peer)
             if peer not in self.peers.keys():
-                peer = peer.split("_")[0]
-                print(peer)
-                #reactor.connectTCP(peer, PEER_PORT, factory)
+                peer_ip = peer.split("_")[0]
+                reactor.connectTCP(peer_ip, PEER_PORT, factory)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
