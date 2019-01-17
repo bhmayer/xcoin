@@ -22,24 +22,31 @@ import nacl.signing
 #Parse command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
-parser.add_argument("-d", "--docker", help="run node for a detached docker environment", action="store_true")
+parser.add_argument("-b", "--bootstrap", help="run as docker bootstrap", action="store_true")
+parser.add_argument("-p", "--peer", help="run as docker peer, add additional bootstrap address", action="store_true")
+parser.add_argument("address", nargs='?', help="print out if p tag", type=str)
 args = parser.parse_args()
 if args.mirror:
     ledger_dir = "mirror/ledger.p"
     seed_dir = "mirror/seed.p"
     PORT = 8124
     PEER_PORT = 8123
-elif args.docker:
+elif args.bootstrap:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
+elif args.peer:
+    edger_dir = "ledger.p"
+    seed_dir = "seed.p"
+    PORT = 8123
+    PEER_PORT = 8123
+    BOOTSTRAP_ADDRESS = args.address
 else:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8124
-
 
 #Set configuration for network settings
 PEER_LIST_SIZE = 30
@@ -59,8 +66,8 @@ my_address = pubkey
 
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
 
-if args.docker:
-    reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
+if args.peer:
+    reactor.connectTCP(BOOTSTRAP_ADDRESS, PEER_PORT, factory)
 else:
     stdio.StandardIO(factory.buildCommandProtocol())
 
