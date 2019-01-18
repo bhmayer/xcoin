@@ -12,9 +12,9 @@ COPY . /app
 
 RUN pip install PyNacl Twisted
 
-# Define environment variable
-ENV NAME World
+# Define arg
+ARG FLAG=-p
 
 # Run app.py when the container launches
-CMD ["python", "xcoin.py"]
+ENTRYPOINT ["python", "xcoin.py"]
 

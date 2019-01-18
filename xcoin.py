@@ -37,7 +37,7 @@ elif args.bootstrap:
     PORT = 8123
     PEER_PORT = 8123
 elif args.peer:
-    edger_dir = "ledger.p"
+    ledger_dir = "ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
@@ -67,7 +67,7 @@ my_address = pubkey
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
 
 if args.peer:
-    reactor.connectTCP(BOOTSTRAP_ADDRESS, PEER_PORT, factory)
+    reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
 else:
     stdio.StandardIO(factory.buildCommandProtocol())
 
