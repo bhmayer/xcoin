@@ -104,6 +104,7 @@ class NodeProtocol(LineReceiver):
 
         self.sendData("receivePeers", peerList)
 
+
     def do_receivePeers(self,data):
         """ Receive peers from another node """
         
@@ -223,13 +224,14 @@ class CommandProtocol(LineReceiver):
 
     def do_test(self):
         """ test command for debugging current problem """
-        self.factory.test()
+        self.factory.requestPeers()
 
 
 class NodeFactory(ClientFactory):
     def __init__(self, input_reactor, ledger, my_address, signing_key, PEER_PORT):
         self.new_transactions = []
         self.peers = {}
+        self.peers_ip_list = []
         self.reactor = input_reactor
         self.ledger = ledger
         self.my_address = my_address
@@ -239,6 +241,7 @@ class NodeFactory(ClientFactory):
     def buildProtocol(self, addr):
         newProtocol = NodeProtocol(addr, self)
         self.peers[nodeID(addr)] = newProtocol
+        self.peers_ip_list.append(addr.host)
         return newProtocol
 
     def buildCommandProtocol(self):
@@ -296,10 +299,12 @@ class NodeFactory(ClientFactory):
     
     def receivePeers(self, data):
         for peer in data:
-            print(peer)
-            # if peer not in self.peers.keys():
-            #     peer_ip = peer.split("_")[0]
-            #     self.reactor.connectTCP(peer_ip, self.PEER_PORT, self.factory)
+            peer_ip = peer.split("_")[0]
+            print(peer_ip)
+            if peer_ip not in self.peers_ip_list:
+                print("connecting to" + peer_ip)
+                self.reactor.connectTCP(peer_ip, self.PEER_PORT, self)
+                print("conected to " + peer_ip)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """

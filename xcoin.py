@@ -22,6 +22,7 @@ import nacl.signing
 #Parse command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
+parser.add_argument("-n", "--nirror", help="run node as a mirror", action="store_true")
 parser.add_argument("-b", "--bootstrap", help="run as docker bootstrap", action="store_true")
 parser.add_argument("-p", "--peer", help="run as docker peer, add additional bootstrap address", action="store_true")
 parser.add_argument("address", nargs='?', help="print out if p tag", type=str)
@@ -42,6 +43,11 @@ elif args.peer:
     PORT = 8123
     PEER_PORT = 8123
     BOOTSTRAP_ADDRESS = args.address
+elif args.nirror:
+    ledger_dir = "ledger.p"
+    seed_dir = "seed.p"
+    PORT = 8125
+    PEER_PORT = 8123
 else:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
@@ -66,20 +72,20 @@ my_address = pubkey
 
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
 
+stdio.StandardIO(factory.buildCommandProtocol())
+
 if args.peer:
     reactor.connectTCP(BOOTSTRAP_ADDRESS, PEER_PORT, factory) 
-elif args.bootstrap:
-    reactor.connectTCP("172.16.238.11", PEER_PORT, factory) 
-else:
-    stdio.StandardIO(factory.buildCommandProtocol())
+
+
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
     factory.requestPeers()
 
-if (not args.mirror) & (not args.peer) & (not args.bootstrap):
+if args.peer:
     lc = LoopingCall(maintainPeerList, factory)
-    lc.start(5)
+    lc.start(10)
 
 reactor.listenTCP(PORT, factory)
 reactor.run()
