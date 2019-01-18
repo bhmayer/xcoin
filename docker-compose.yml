@@ -4,7 +4,29 @@ services:
     bootstrap:
       build: .
       command: ["-b"]
+      ports:
+            - "0:8123"
+      networks:
+        app_net:
+          ipv4_address: 172.16.238.10
 
-    peers:
+    peer:
       build: .
-      command: ["-p", "10.0.18.40"]
+      command: ["-p", "172.16.238.10"]
+      ports:
+            - "0:8123"
+      depends_on:
+        - "bootstrap"
+      networks: 
+        - app_net
+
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.238.0/24
+
+

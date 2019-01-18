@@ -77,9 +77,9 @@ def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
     factory.requestPeers()
 
-# if (not args.mirror) & (not args.peer) & (not args.bootstrap):
-#     lc = LoopingCall(maintainPeerList, factory)
-#     lc.start(5)
+if (not args.mirror) & (not args.peer) & (not args.bootstrap):
+    lc = LoopingCall(maintainPeerList, factory)
+    lc.start(5)
 
 reactor.listenTCP(PORT, factory)
 reactor.run()

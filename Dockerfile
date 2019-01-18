@@ -12,6 +12,8 @@ COPY . /app
 
 RUN pip install PyNacl Twisted
 
+EXPOSE 8123
+
 # Run app.py when the container launches
 ENTRYPOINT ["python", "xcoin.py"]
 

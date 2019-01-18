@@ -297,9 +297,9 @@ class NodeFactory(ClientFactory):
     def receivePeers(self, data):
         for peer in data:
             print(peer)
-            if peer not in self.peers.keys():
-                peer_ip = peer.split("_")[0]
-                self.reactor.connectTCP(peer_ip, self.PEER_PORT, self.factory)
+            # if peer not in self.peers.keys():
+            #     peer_ip = peer.split("_")[0]
+            #     self.reactor.connectTCP(peer_ip, self.PEER_PORT, self.factory)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
