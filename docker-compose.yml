@@ -1,9 +1,5 @@
 version: '3'
 services:
-
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        runtime_args: --b
+    bootstrap:
+      build: .
 
