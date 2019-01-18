@@ -69,9 +69,9 @@ factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
 if args.peer:
     reactor.connectTCP(BOOTSTRAP_ADDRESS, PEER_PORT, factory) 
 elif args.bootstrap:
-    reactor.connectTCP("10.0.18.40", PEER_PORT, factory) 
+    reactor.connectTCP("172.16.238.11", PEER_PORT, factory) 
 else:
-    stdio.StandardIO(factory.buildCommandProtocol())
+     stdio.StandardIO(factory.buildCommandProtocol())
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
