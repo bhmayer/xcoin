@@ -71,7 +71,7 @@ if args.peer:
 elif args.bootstrap:
     reactor.connectTCP("172.16.238.11", PEER_PORT, factory) 
 else:
-     stdio.StandardIO(factory.buildCommandProtocol())
+    stdio.StandardIO(factory.buildCommandProtocol())
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
