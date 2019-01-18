@@ -263,6 +263,7 @@ class NodeFactory(ClientFactory):
             self.sendPeers("newBlock", new_block.dump())
         else:
             print("Invalid block")
+        print("sent block")
         self.new_transactions = []
 
     def newBlock(self, block):
@@ -300,11 +301,8 @@ class NodeFactory(ClientFactory):
     def receivePeers(self, data):
         for peer in data:
             peer_ip = peer.split("_")[0]
-            print(peer_ip)
             if peer_ip not in self.peers_ip_list:
-                print("connecting to" + peer_ip)
                 self.reactor.connectTCP(peer_ip, self.PEER_PORT, self)
-                print("conected to " + peer_ip)
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """

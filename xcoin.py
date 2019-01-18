@@ -18,6 +18,7 @@ from twisted.internet import reactor, stdio
 from twisted.internet.task import LoopingCall
 import nacl.encoding
 import nacl.signing
+from generate_seed_random import generateRandomSeed
 
 #Parse command line arguments
 parser = argparse.ArgumentParser()
@@ -37,12 +38,14 @@ elif args.bootstrap:
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
+    generateRandomSeed()
 elif args.peer:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
     BOOTSTRAP_ADDRESS = args.address
+    generateRandomSeed()
 elif args.nirror:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
@@ -81,11 +84,20 @@ if args.peer:
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
+    print(factory.my_address)
+    factory.get()
     factory.requestPeers()
+    factory.listPeers()
 
-if args.peer:
-    lc = LoopingCall(maintainPeerList, factory)
-    lc.start(10)
+def update(factory):
+    factory.update()
+
+lc = LoopingCall(maintainPeerList, factory)
+lc.start(5)
+
+if args.bootstrap:
+    lc2 = LoopingCall(update, factory)
+    lc2.start(10)
 
 reactor.listenTCP(PORT, factory)
 reactor.run()
