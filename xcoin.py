@@ -67,11 +67,17 @@ my_address = pubkey
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
 
 if args.peer:
-    reactor.connectTCP("10.0.18.40", PEER_PORT, factory)
+    reactor.connectTCP(BOOTSTRAP_ADDRESS, PEER_PORT, factory) 
+elif args.bootstrap:
+    reactor.connectTCP("10.0.18.40", PEER_PORT, factory) 
 else:
     stdio.StandardIO(factory.buildCommandProtocol())
 
-# if args.mirror:
+def maintainPeerList(factory):
+    """ Looping call function for maintaing a list of peers """
+    factory.requestPeers()
+
+# if (not args.mirror) & (not args.peer) & (not args.bootstrap):
 #     lc = LoopingCall(maintainPeerList, factory)
 #     lc.start(5)
 

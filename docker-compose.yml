@@ -1,7 +1,10 @@
 version: '3'
 services:
-  
+
     bootstrap:
       build: .
-      command: -p
+      command: ["-b"]
 
+    peers:
+      build: .
+      command: ["-p", "10.0.18.40"]
