@@ -228,21 +228,23 @@ class CommandProtocol(LineReceiver):
 
 
 class NodeFactory(ClientFactory):
-    def __init__(self, input_reactor, ledger, my_address, signing_key, PEER_PORT):
+    def __init__(self, input_reactor, ledger, my_address, signing_key, PEER_PORT, MY_IP):
         self.new_transactions = []
         self.peers = {}
-        self.peers_ip_list = []
         self.reactor = input_reactor
         self.ledger = ledger
         self.my_address = my_address
         self.signing_key = signing_key
         self.PEER_PORT = PEER_PORT
+        self.MY_IP = MY_IP
+        self.peers_ip_list = [MY_IP]
 
     def buildProtocol(self, addr):
         newProtocol = NodeProtocol(addr, self)
-        self.peers[nodeID(addr)] = newProtocol
-        self.peers_ip_list.append(addr.host)
-        return newProtocol
+        if addr.host not in self.peers_ip_list:
+            self.peers[nodeID(addr)] = newProtocol
+            self.peers_ip_list.append(addr.host)
+            return newProtocol
 
     def buildCommandProtocol(self):
         self.cmd_line = CommandProtocol(self)

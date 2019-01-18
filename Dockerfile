@@ -10,7 +10,7 @@ COPY . /app
 # Install any needed packages specified in requirements.txt
 # RUN apt-get update && apt-get install -y python3-twisted
 
-RUN pip install PyNacl Twisted
+RUN pip install PyNacl Twisted Netifaces
 
 EXPOSE 8123
 

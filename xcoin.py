@@ -19,6 +19,14 @@ from twisted.internet.task import LoopingCall
 import nacl.encoding
 import nacl.signing
 from generate_seed_random import generateRandomSeed
+import netifaces as ni
+
+#Find machine's own ip address
+# ni.ifaddresses('en0')
+try:
+    myIP = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
+except ValueError:
+    myIP = ni.ifaddresses('en0')[ni.AF_INET][0]['addr']
 
 #Parse command line arguments
 parser = argparse.ArgumentParser()
@@ -73,7 +81,7 @@ pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 #Enter address for node block rewards
 my_address = pubkey
 
-factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT)
+factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, myIP)
 
 stdio.StandardIO(factory.buildCommandProtocol())
 
@@ -84,8 +92,7 @@ if args.peer:
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
-    print(factory.my_address)
-    factory.get()
+    # print(factory.my_address)
     factory.requestPeers()
     factory.listPeers()
 
@@ -95,9 +102,9 @@ def update(factory):
 lc = LoopingCall(maintainPeerList, factory)
 lc.start(5)
 
-if args.bootstrap:
-    lc2 = LoopingCall(update, factory)
-    lc2.start(10)
+# if args.bootstrap:
+#     lc2 = LoopingCall(update, factory)
+#     lc2.start(10)
 
 reactor.listenTCP(PORT, factory)
 reactor.run()
