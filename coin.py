@@ -40,7 +40,7 @@ class Ledger:
 
         #Check if we are in the right part of the tree
         if self.current_block_hash() != block.prev_hash:
-            print("incorrect hash")
+            # print("incorrect hash")
             return False
 
         #Pop reward transaction from last part of the node

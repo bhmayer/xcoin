@@ -46,7 +46,6 @@ class NodeProtocol(LineReceiver):
 
     def requestPeers(self):
         """ Request peer list from another node """
-        print("Requesting")
         self.sendData("sendPeers", "")
 
     def lineReceived(self, line):
@@ -72,7 +71,10 @@ class NodeProtocol(LineReceiver):
                 pass
 
     def do_newBlock(self, data):
-        self.factory.newBlock(data)
+        self.factory.newBlockExcept(data,self.addr.host)
+
+    def do_getBlock(self, data):
+        self.factory.newBlockNoSend(data)
 
     def do_returnNextBlock(self, hash_value):
         """ Return the next block after the provided hash """
@@ -82,7 +84,7 @@ class NodeProtocol(LineReceiver):
         for block in self.factory.ledger.blocks:
             if break_next_cycle == True:
                 """Breaking cycle"""
-                self.sendData("newBlock", block.dump())
+                self.sendData("getBlock", block.dump())
                 break
             elif block.hash == hash_value:
                 break_next_cycle = True
@@ -240,8 +242,8 @@ class NodeFactory(ClientFactory):
         self.peers_ip_list = [MY_IP]
 
     def buildProtocol(self, addr):
-        newProtocol = NodeProtocol(addr, self)
         if addr.host not in self.peers_ip_list:
+            newProtocol = NodeProtocol(addr, self)
             self.peers[nodeID(addr)] = newProtocol
             self.peers_ip_list.append(addr.host)
             return newProtocol
@@ -273,8 +275,34 @@ class NodeFactory(ClientFactory):
             block = Block.from_json(block)
             if self.ledger.add(block):
                 print("Received new block!")
-            else:
-                print("Invalid block")
+                self.sendPeers("newBlock", block.dump())
+            # else:
+            #     print("Invalid block")
+            self.new_transactions = []
+        except Exception as e:
+            print(e)
+
+    def newBlockExcept(self, block, do_not_send_peer):
+        """ Send block to everyone except do_not_send_peer, usually the sender """
+        try:
+            block = Block.from_json(block)
+            if self.ledger.add(block):
+                print("Received new block!")
+                self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
+            # else:
+            #     print("Invalid block")
+            self.new_transactions = []
+        except Exception as e:
+            print(e)
+
+    def newBlockNoSend (self, block):
+        """ Receive a block and do not send it, useful when asking for older blocks """
+        try:
+            block = Block.from_json(block)
+            if self.ledger.add(block):
+                print("Received new block!")
+            # else:
+            #     print("Invalid block")
             self.new_transactions = []
         except Exception as e:
             print(e)
@@ -282,6 +310,12 @@ class NodeFactory(ClientFactory):
     def sendPeers(self, code, data):
         for peer in self.peers:
             self.peers[peer].sendData(code, data)
+
+    def sendPeersExcept(self, code, data, do_not_send_peer):
+        """ Send data to all peers except one, this is usually the sender """
+        for peer in self.peers:
+            if peer != do_not_send_peer:
+                self.peers[peer].sendData(code, data)
 
     def listPeers(self):
         for peer in self.peers:
