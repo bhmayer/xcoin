@@ -80,6 +80,9 @@ class Ledger:
 
     def current_block_hash(self):
         return self.blocks[-1].hash
+
+    def current_block_number(self):
+        return self.blocks[-1].block_number
                 
 
 #Block class for holding transactions
