@@ -88,6 +88,15 @@ class NodeProtocol(LineReceiver):
                 break
             elif block.hash == hash_value:
                 break_next_cycle = True
+
+    def do_returnBlock(self, hash_value):
+        """ Return the next block after the provided hash, this can be improved to be less cumbersom
+                maybe dictionary for finding specific hashes quickly
+         """
+
+        for block in self.factory.ledger.blocks:
+            if block.hash == hash_value:
+                self.sendData("getBlock", block.dump())
     
     def do_ping(self, data):
         self.sendData("pong", "")
@@ -272,28 +281,32 @@ class NodeFactory(ClientFactory):
         print("sent block")
         self.new_transactions = []
 
-    def newBlock(self, block):
-        try:
-            block = Block.from_json(block)
-            if self.ledger.add(block):
-                print("Received block " + str(block.block_number))
-                self.sendPeers("newBlock", block.dump())
-            # else:
-            #     print("Invalid block")
-            self.new_transactions = []
-        except Exception as e:
-            print(e)
+    # def newBlock(self, block):
+    #     try:
+    #         block = Block.from_json(block)
+    #         if self.ledger.add(block):
+    #             print("Received block " + str(block.block_number))
+    #             self.sendPeers("newBlock", block.dump())
+    #         # else:
+    #         #     print("Invalid block")
+    #         self.new_transactions = []
+    #     except Exception as e:
+    #         print(e)
 
     def newBlockExcept(self, block, do_not_send_peer):
         """ Send block to everyone except do_not_send_peer, usually the sender """
         try:
             block = Block.from_json(block)
-            print("got block number: " + str(block.block_number))
-            if self.ledger.add(block):
-                print("Received block " + str(block.block_number))
-                self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
-            # else:
-            #     print("Invalid block")
+
+            #Check if this is the next block in sequence
+            if block.block_number > self.ledger.current_block_number():
+                self.getBlock(block.prev_hash)
+
+            if block.prev_hash == self.ledger.current_block_hash():
+                if self.ledger.add(block):
+                    print("Received block " + str(block.block_number))
+                    self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
+
             self.new_transactions = []
         except Exception as e:
             print(e)
@@ -302,10 +315,15 @@ class NodeFactory(ClientFactory):
         """ Receive a block and do not send it, useful when asking for older blocks """
         try:
             block = Block.from_json(block)
-            if self.ledger.add(block):
-                print("Received new block!")
-            # else:
-            #     print("Invalid block")
+
+            #Check if this is the next block in sequence
+            if block.block_number > self.ledger.current_block_number():
+                self.getBlock(block.prev_hash)
+
+            if block.prev_hash == self.ledger.current_block_hash():
+                if self.ledger.add(block):
+                    print("Received block " + str(block.block_number))
+                    
             self.new_transactions = []
         except Exception as e:
             print(e)
@@ -327,6 +345,9 @@ class NodeFactory(ClientFactory):
     def get(self):
         """ Requests new block, for testing """
         self.sendPeers("returnNextBlock", self.ledger.current_block_hash())
+
+    def getBlock(self, block_hash):
+        self.sendPeers("returnBlock", block_hash)
 
     def pingPeers(self):
         for peer in self.peers:

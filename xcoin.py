@@ -95,7 +95,6 @@ def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
     if factory.peerListSize() < ns.PEER_LIST_SIZE:
         factory.requestPeers()
-        factory.get()
         print("maintain")
 
 
@@ -105,7 +104,7 @@ def update(factory):
 
 lc = LoopingCall(maintainPeerList, factory)
 # reactor.callLater(5, lc)
-lc.start(5)
+lc.start(20)
 
 if args.bootstrap:
     lc2 = LoopingCall(update, factory)
