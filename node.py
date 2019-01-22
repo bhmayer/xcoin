@@ -276,7 +276,7 @@ class NodeFactory(ClientFactory):
         try:
             block = Block.from_json(block)
             if self.ledger.add(block):
-                print("Received new block!")
+                print("Received block " + str(block.block_number))
                 self.sendPeers("newBlock", block.dump())
             # else:
             #     print("Invalid block")
@@ -288,8 +288,9 @@ class NodeFactory(ClientFactory):
         """ Send block to everyone except do_not_send_peer, usually the sender """
         try:
             block = Block.from_json(block)
+            print("got block number: " + str(block.block_number))
             if self.ledger.add(block):
-                print("Received new block!")
+                print("Received block " + str(block.block_number))
                 self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
             # else:
             #     print("Invalid block")

@@ -24,6 +24,7 @@ def genesis():
     genesis_transactions = [genesis_transaction]
     genesis_block = Block(genesis_transactions, 0, 0)
     helper.label_transactions(genesis_block, 0)
+    genesis_block.set_block_number(0)
     genesis_block.set_hash()
     return Ledger([genesis_block])
 
