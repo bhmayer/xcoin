@@ -20,6 +20,7 @@ import nacl.encoding
 import nacl.signing
 from generate_seed_random import generateRandomSeed
 import netifaces as ni
+import network_settings as ns
 
 #Find machine's own ip address
 # ni.ifaddresses('en0')
@@ -81,7 +82,7 @@ pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 #Enter address for node block rewards
 my_address = pubkey
 
-factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, myIP)
+factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, myIP, ns)
 
 stdio.StandardIO(factory.buildCommandProtocol())
 
@@ -95,17 +96,19 @@ def maintainPeerList(factory):
     # print(factory.my_address)
     factory.requestPeers()
     factory.get()
+    print("maintain")
 
 def update(factory):
     factory.update()
 
 lc = LoopingCall(maintainPeerList, factory)
-lc.start(5)
+reactor.callLater(5, lc)
+lc.start(20)
 
 if args.bootstrap:
     lc2 = LoopingCall(update, factory)
     lc2.start(10)
-    # reactor.callLater(10, f)
+
 
 reactor.listenTCP(PORT, factory)
 reactor.run()

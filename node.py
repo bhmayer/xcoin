@@ -230,7 +230,8 @@ class CommandProtocol(LineReceiver):
 
 
 class NodeFactory(ClientFactory):
-    def __init__(self, input_reactor, ledger, my_address, signing_key, PEER_PORT, MY_IP):
+    def __init__(self, input_reactor, ledger, my_address, 
+        signing_key, PEER_PORT, MY_IP, NETWORK_SETTINGS):
         self.new_transactions = []
         self.peers = {}
         self.reactor = input_reactor
@@ -240,6 +241,7 @@ class NodeFactory(ClientFactory):
         self.PEER_PORT = PEER_PORT
         self.MY_IP = MY_IP
         self.peers_ip_list = [MY_IP]
+        self.ns = NETWORK_SETTINGS
 
     def buildProtocol(self, addr):
         if addr.host not in self.peers_ip_list:
