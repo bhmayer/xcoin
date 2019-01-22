@@ -93,10 +93,11 @@ if args.peer:
 
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
-    # print(factory.my_address)
-    factory.requestPeers()
-    factory.get()
-    print("maintain")
+    if factory.peerListSize() < ns.PEER_LIST_SIZE:
+        factory.requestPeers()
+        print("maintain")
+
+
 
 def update(factory):
     factory.update()

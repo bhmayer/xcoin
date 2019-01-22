@@ -4,4 +4,4 @@ Constants for networking
 
 """
 
-x = 5
+PEER_LIST_SIZE = 3

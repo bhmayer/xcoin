@@ -342,6 +342,10 @@ class NodeFactory(ClientFactory):
             if peer_ip not in self.peers_ip_list:
                 self.reactor.connectTCP(peer_ip, self.PEER_PORT, self)
 
+    def peerListSize(self):
+        """ Return number of peers """
+        return len(self.peers)
+
 def maintainPeerList(factory):
     """ Looping call function for maintaing a list of peers """
     factory.requestPeers()
