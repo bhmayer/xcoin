@@ -102,9 +102,6 @@ def update(factory):
 lc = LoopingCall(maintainPeerList, factory)
 lc.start(5)
 
-def f():
-    print("called later!")
-
 if args.bootstrap:
     lc2 = LoopingCall(update, factory)
     lc2.start(10)
