@@ -31,6 +31,7 @@ class Ledger:
         #Label transactions with block number and order and assign hashes
         helper.label_transactions(block, len(self.blocks))
 
+        block.set_block_number(self.block_num() + 1)
         block.set_hash()  
         self.blocks.append(block)
         return True
@@ -87,23 +88,29 @@ class Block:
         self.timestamp = datetime.datetime.now().timestamp()
         self.transactions = transactions
         self.processor = processor
+        self.block_number = -1
         self.prev_hash = prev_hash
         self.hash = -1
+        
 
     #Extends transactions for block processing
     def extend_transactions(self, x):
         self.transactions.extend(x)
 
+    # set the block number of the block
+    def set_block_number(self, x):
+        self.block_number = x
+
     #Set hash of the block
     def set_hash(self):
-        hash_value = str(self.timestamp) + str(self.processor) + str(self.prev_hash)
+        hash_value = str(self.timestamp) + str(self.processor) + str(self.block_number) + str(self.prev_hash) 
         for transaction in self.transactions:
             hash_value = hash_value + str(transaction.hash)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
 
     #Converts block to JSON
     def dump(self):
-        block_data = [self.timestamp, self.processor.decode("ascii"), self.prev_hash, self.hash]
+        block_data = [self.timestamp, self.processor.decode("ascii"), self.prev_hash, self.hash, self.block_number]
         transaction_data = []
         for transaction in self.transactions:
             transaction_data.append(transaction.dump())
@@ -122,6 +129,7 @@ class Block:
         block = cls(transactions, block_data[1].encode("ascii"), block_data[2])
         block.timestamp = block_data[0]
         block.hash = block_data[3]
+        block.block_number = block_data[4]
         return block
 
 
