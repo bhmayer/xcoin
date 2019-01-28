@@ -319,10 +319,13 @@ class NodeFactory(ClientFactory):
             #Check if this is the next block in sequence
             if block.block_number > self.ledger.current_block_number():
                 self.getBlock(block.prev_hash)
-
             if block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
                     print("Received block " + str(block.block_number))
+            elif self.ledger.is_root(block):
+                self.ledger.add_root(block)
+            else:
+                self.getBlock(block.prev_hash)
                     
             self.new_transactions = []
         except Exception as e:
