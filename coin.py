@@ -66,9 +66,9 @@ class Ledger:
 
         #Check if hashes was properly computed
         helper.label_transactions(block, len(self.blocks))
-        hash = block.hash
+        provided_hash = block.hash
         block.set_hash()
-        if block.hash != hash:
+        if block.hash != provided_hash:
             print("could not duplicate hash")
             return False
 
