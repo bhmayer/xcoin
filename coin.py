@@ -79,6 +79,13 @@ class Ledger:
     def check_balance(self, address):
         return helper.check_balance(self, address)
 
+    def is_root(self, block):
+        """ Returns true if a block can fit in the ledger """
+        if block.prev_hash == self.blocks[block.block_num - 1].hash:
+            return True
+
+        return False
+
     def current_block_hash(self):
         return self.blocks[-1].hash
 
