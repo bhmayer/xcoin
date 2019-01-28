@@ -31,7 +31,7 @@ class Ledger:
         #Label transactions with block number and order and assign hashes
         helper.label_transactions(block, len(self.blocks))
 
-        block.set_block_number(self.block_num() + 1)
+        block.set_block_number(self.current_block_number() + 1)
         block.set_hash()  
         self.blocks.append(block)
         return True
@@ -42,6 +42,10 @@ class Ledger:
         #Check if we are in the right part of the tree
         if self.current_block_hash() != block.prev_hash:
             # print("incorrect hash")
+            return False
+
+        #Check if block number is correct
+        if self.current_block_number() + 1 != block.block_number:
             return False
 
         #Pop reward transaction from last part of the node
@@ -74,9 +78,6 @@ class Ledger:
 
     def check_balance(self, address):
         return helper.check_balance(self, address)
-
-    def block_num(self):
-        return len(self.blocks)
 
     def current_block_hash(self):
         return self.blocks[-1].hash
