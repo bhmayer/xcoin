@@ -32,7 +32,8 @@ class Ledger:
         helper.label_transactions(block, len(self.blocks))
 
         block.set_block_number(self.current_block_number() + 1)
-        block.set_hash()  
+        block.set_hash()
+        print("Created block " + str(block.block_number))
         self.blocks.append(block)
         return True
 
@@ -77,7 +78,10 @@ class Ledger:
         
     def add_root(self, block):
         """ Add method when we are adding behind the current top block """
-        if self.is_root != False:
+        if self.is_root == False:
+            return False
+
+        if block.block_number == 0:
             return False
 
         #Pop reward transaction from last part of the node
@@ -89,8 +93,11 @@ class Ledger:
             return False
 
         #Remove top blocks
-        extra_blocks = self.blocks[block.block_number - 1:-1]
+        print("Removing top blocks" + str(block.block_number))
+        extra_blocks = self.blocks[(block.block_number - 1):]
         self.blocks = self.blocks[0:block.block_number]
+
+        print("new top block" + str(self.blocks[-1].block_number))
 
 
         #Check if transactions are valid
@@ -119,8 +126,10 @@ class Ledger:
 
     def is_root(self, block):
         """ Returns true if a block can fit in the ledger """
-        if block.prev_hash == self.blocks[block.block_number - 1].hash:
-            return True
+        if block.block_number < len(self.blocks):
+            if block.prev_hash == self.blocks[block.block_number - 1].hash and block.hash != self.blocks[block.block_number].hash:
+                print("is root block!")
+                return True
 
         return False
 

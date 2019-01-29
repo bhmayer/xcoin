@@ -49,7 +49,7 @@ elif args.bootstrap:
     PEER_PORT = 8123
     generateRandomSeed()
 elif args.peer:
-    ledger_dir = "ledger.p"
+    ledger_dir = "peer/ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123

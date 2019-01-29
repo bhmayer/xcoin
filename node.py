@@ -237,6 +237,9 @@ class CommandProtocol(LineReceiver):
         """ test command for debugging current problem """
         self.factory.requestPeers()
 
+    def do_save(self):
+        pickle.dump(self.factory.ledger, open( "peer_ledger.p", "wb" ))
+
 
 class NodeFactory(ClientFactory):
     def __init__(self, input_reactor, ledger, my_address, 
@@ -302,7 +305,7 @@ class NodeFactory(ClientFactory):
             if block.block_number > self.ledger.current_block_number():
                 self.getBlock(block.prev_hash)
 
-            if block.prev_hash == self.ledger.current_block_hash():
+            elif block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
                     print("Received block " + str(block.block_number))
                     self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
@@ -319,14 +322,15 @@ class NodeFactory(ClientFactory):
             #Check if this is the next block in sequence
             if block.block_number > self.ledger.current_block_number():
                 self.getBlock(block.prev_hash)
-            if block.prev_hash == self.ledger.current_block_hash():
+            elif block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
                     print("Received block " + str(block.block_number))
             elif self.ledger.is_root(block):
-                self.ledger.add_root(block)
+                if self.ledger.add_root(block):
+                    print("Received block " + str(block.block_number))
+                    self.getNextBlock()
             else:
                 self.getBlock(block.prev_hash)
-                    
             self.new_transactions = []
         except Exception as e:
             print(e)
@@ -345,8 +349,8 @@ class NodeFactory(ClientFactory):
         for peer in self.peers:
             print(peer)
 
-    def get(self):
-        """ Requests new block, for testing """
+    def getNextBlock(self):
+        """ Requests next block """
         self.sendPeers("returnNextBlock", self.ledger.current_block_hash())
 
     def getBlock(self, block_hash):
