@@ -13,6 +13,7 @@ import nacl.exceptions
 from decimal import *
 
 miner_reward = Decimal("0.1")
+POW_difficulty = 0
 
 #Ledger class for holding blocks
 class Ledger:
@@ -175,6 +176,8 @@ class Block:
         self.block_number = -1
         self.prev_hash = prev_hash
         self.hash = -1
+        self.nonce = -1
+        self.POW_difficulty = -1
         
 
     #Extends transactions for block processing
@@ -185,16 +188,19 @@ class Block:
     def set_block_number(self, x):
         self.block_number = x
 
+    def set_nonce(self, x):
+        self.nonce = x
+
     #Set hash of the block
     def set_hash(self):
-        hash_value = str(self.timestamp) + str(self.processor) + str(self.block_number) + str(self.prev_hash) 
+        hash_value = str(self.timestamp) + str(self.processor) + str(self.block_number) + str(self.prev_hash) + str(self.nonce) + str(self.POW_difficulty)
         for transaction in self.transactions:
             hash_value = hash_value + str(transaction.hash)
         self.hash = hashlib.sha256(hash_value.encode('utf-8')).hexdigest()
 
     #Converts block to JSON
     def dump(self):
-        block_data = [self.timestamp, self.processor.decode("ascii"), self.prev_hash, self.hash, self.block_number]
+        block_data = [self.timestamp, self.processor.decode("ascii"), self.prev_hash, self.hash, self.block_number, self.nonce, self.POW_difficulty]
         transaction_data = []
         for transaction in self.transactions:
             transaction_data.append(transaction.dump())
@@ -214,6 +220,8 @@ class Block:
         block.timestamp = block_data[0]
         block.hash = block_data[3]
         block.block_number = block_data[4]
+        block.nonce = block_data[5]
+        block.POW_difficulty = block_data[6]
         return block
 
 
