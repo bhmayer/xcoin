@@ -21,9 +21,23 @@ def find_nonce(hash_value, POW_difficulty):
 
     return nonce
 
+def find_nonce_random_start(hash_value, POW_difficulty):
+
+    nonce = random.randint(1,10000000000000)
+    target = ""
+    result = ""
+    for _ in range(POW_difficulty):
+        target = target + "0"
+
+    while result[:POW_difficulty] != target:
+        nonce = nonce + 1
+        result = hashlib.sha256((hash_value+str(nonce)).encode('utf-8')).hexdigest()
+
+    return nonce
+
 if __name__ == "__main__":
    
     #letters = string.ascii_lowercase
     # hash_value = "".join(random.choice(letters) for i in range(32))
     hash_value="abcdefghijklmonp"
-    print(find_nonce(hash_value, 6))
+    print(find_nonce_random_start(hash_value, 6))
