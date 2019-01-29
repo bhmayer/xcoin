@@ -79,11 +79,11 @@ class Ledger:
     def add_buffer(self, block_buffer):
         """ add a buffer of blocks with buffer organized in reverse order """
 
-        if block_buffer[0].block_number <= self.current_block_number:
+        if block_buffer[0].block_number <= self.current_block_number():
             return False
         
         if block_buffer[-1].prev_hash == self.current_block_hash():
-            while len(block_buffer > 0):
+            while len(block_buffer) > 0:
                 new_block = block_buffer.pop()
                 if self.add(new_block) != True:
                     return False
@@ -94,9 +94,9 @@ class Ledger:
             if self.add_root(new_block) == False:
                 return False
 
-            while len(block_buffer > 0):
+            while len(block_buffer) > 0:
                 new_block = block_buffer.pop()
-                if self.add(new_block) != True:
+                if self.add(new_block) == False:
                     return False
         
         return True

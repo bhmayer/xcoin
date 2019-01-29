@@ -15,6 +15,7 @@ import json
 import nacl.encoding
 import nacl.signing
 from decimal import *
+from collections import deque
 
 def nodeID(addr):
     """Helper function to create nodeid"""
@@ -254,6 +255,7 @@ class NodeFactory(ClientFactory):
         self.MY_IP = MY_IP
         self.peers_ip_list = [MY_IP]
         self.ns = NETWORK_SETTINGS
+        self.block_buffer = deque()
 
     def buildProtocol(self, addr):
         if addr.host not in self.peers_ip_list:
@@ -301,14 +303,17 @@ class NodeFactory(ClientFactory):
         try:
             block = Block.from_json(block)
 
-            #Check if this is the next block in sequence
-            if block.block_number > self.ledger.current_block_number():
-                self.getBlock(block.prev_hash)
-
-            elif block.prev_hash == self.ledger.current_block_hash():
+            if block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
                     print("Received block " + str(block.block_number))
                     self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
+
+            elif block.block_number > self.ledger.current_block_number():
+                if len(self.block_buffer) == 0 :
+                    self.block_buffer.append(block)
+                    self.getBlock(block.prev_hash)
+                elif self.block_buffer[-1].hash == block.prev_hash:
+                    self.block_buffer.appendleft(block)
 
             self.new_transactions = []
         except Exception as e:
@@ -319,22 +324,28 @@ class NodeFactory(ClientFactory):
         try:
             block = Block.from_json(block)
 
-            #Check if this is the next block in sequence
-            if block.block_number > self.ledger.current_block_number():
-                self.getBlock(block.prev_hash)
-            elif block.prev_hash == self.ledger.current_block_hash():
-                if self.ledger.add(block):
-                    print("Received block " + str(block.block_number))
-            elif self.ledger.is_root(block):
-                if self.ledger.add_root(block):
-                    print("Received block " + str(block.block_number))
-                    self.getNextBlock()
-            else:
-                self.getBlock(block.prev_hash)
+            #Add block to buffer list if it fits
+            if block.hash == self.block_buffer[-1].prev_hash:
+                self.block_buffer.append(block)
+
+                #Check if this is the next block in sequence
+                if block.prev_hash == self.ledger.current_block_hash():
+                    if self.ledger.add_buffer(self.block_buffer):
+                        print("Received block buffer now at block " + str(self.ledger.current_block_number()))
+                    self.block_buffer.clear()
+
+                elif self.ledger.is_root(block):
+                    if self.ledger.add_buffer(self.block_buffer):
+                        print("Received block buffer now at block " + str(self.ledger.current_block_number()))
+                    self.block_buffer.clear()
+
+                else:
+                    self.getBlock(block.prev_hash)
+
             self.new_transactions = []
         except Exception as e:
             print(e)
-    
+   
     def sendPeers(self, code, data):
         for peer in self.peers:
             self.peers[peer].sendData(code, data)
