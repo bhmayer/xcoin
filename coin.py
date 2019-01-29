@@ -75,6 +75,32 @@ class Ledger:
 
         self.blocks.append(block)
         return True
+
+    def add_buffer(self, block_buffer):
+        """ add a buffer of blocks with buffer organized in reverse order """
+
+        if block_buffer[0].block_number <= self.current_block_number:
+            return False
+        
+        if block_buffer[-1].prev_hash == self.current_block_hash():
+            while len(block_buffer > 0):
+                new_block = block_buffer.pop()
+                if self.add(new_block) != True:
+                    return False
+        
+        if self.is_root(block_buffer[-1]):
+            new_block = block_buffer.pop()
+
+            if self.add_root(new_block) == False:
+                return False
+
+            while len(block_buffer > 0):
+                new_block = block_buffer.pop()
+                if self.add(new_block) != True:
+                    return False
+        
+        return True
+
         
     def add_root(self, block):
         """ Add method when we are adding behind the current top block """
