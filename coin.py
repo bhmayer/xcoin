@@ -177,7 +177,7 @@ class Block:
         self.prev_hash = prev_hash
         self.hash = -1
         self.nonce = -1
-        self.POW_difficulty = -1
+        self.POW_difficulty = POW_difficulty
         
 
     #Extends transactions for block processing
