@@ -211,7 +211,7 @@ class CommandProtocol(LineReceiver):
 
     def do_status(self):
         """ Check current status of the node """
-        self.sendLine(str(self.factory.ledger.block_num()).encode('UTF-8'))
+        self.sendLine(str(self.factory.ledger.current_block_number()).encode('UTF-8'))
         self.sendLine(str(self.factory.ledger.current_block_hash()).encode('UTF-8'))
 
     def do_get(self):

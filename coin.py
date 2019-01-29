@@ -75,13 +75,51 @@ class Ledger:
         self.blocks.append(block)
         return True
         
+    def add_root(self, block):
+        """ Add method when we are adding behind the current top block """
+        if self.is_root != False:
+            return False
+
+        #Pop reward transaction from last part of the node
+        reward_transaction = block.transactions.pop()
+
+        #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
+        if helper.valid_reward(reward_transaction, miner_reward) == False:
+            print("miner reward incorrect")
+            return False
+
+        #Remove top blocks
+        extra_blocks = self.blocks[block.block_number - 1:-1]
+        self.blocks = self.blocks[0:block.block_number]
+
+
+        #Check if transactions are valid
+        if helper.valid_block(block, self) == False:
+            print("invalid transactions")
+            self.blocks.append(extra_blocks)
+            return False
+
+        #Add back reward transaction
+        block.transactions.append(reward_transaction)
+
+        #Check if hashes was properly computed
+        helper.label_transactions(block, len(self.blocks))
+        provided_hash = block.hash
+        block.set_hash()
+        if block.hash != provided_hash:
+            self.blocks.append(extra_blocks)
+            print("could not duplicate hash")
+            return False
+
+        self.blocks.append(block)
+        return True
 
     def check_balance(self, address):
         return helper.check_balance(self, address)
 
     def is_root(self, block):
         """ Returns true if a block can fit in the ledger """
-        if block.prev_hash == self.blocks[block.block_num - 1].hash:
+        if block.prev_hash == self.blocks[block.block_number - 1].hash:
             return True
 
         return False
