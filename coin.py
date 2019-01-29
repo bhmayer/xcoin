@@ -113,7 +113,7 @@ class Ledger:
         #Pop reward transaction from last part of the node
         reward_transaction = block.transactions.pop()
 
-        #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
+        #Check if reward is valid
         if helper.valid_reward(reward_transaction, miner_reward) == False:
             print("miner reward incorrect")
             return False
