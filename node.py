@@ -325,6 +325,7 @@ class NodeFactory(ClientFactory):
                     self.resetPOW()
             elif block.block_number > self.ledger.current_block_number():
                 if len(self.block_buffer) == 0 :
+                    self.d.pause
                     self.block_buffer.append(block)
                     self.getBlock(block.prev_hash)
                 elif self.block_buffer[-1].hash == block.prev_hash:
