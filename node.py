@@ -276,9 +276,9 @@ class NodeFactory(ClientFactory):
         """ Return the balance of an address """
         return self.ledger.check_balance(address)
 
-    def update(self):
+    def update(self, nonce):
         """ Add a new block to the ledger will be replace with mining """
-        new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash())
+        new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash(), nonce)
         if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
         else:
