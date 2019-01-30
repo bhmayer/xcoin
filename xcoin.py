@@ -83,6 +83,7 @@ pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 my_address = pubkey
 
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, myIP, ns)
+reactor.callLater(5, factory.startPOW)
 
 stdio.StandardIO(factory.buildCommandProtocol())
 

@@ -9,17 +9,35 @@ import hashlib
 import helper
 from twisted.internet.protocol import Factory, ClientFactory
 from twisted.protocols.basic import LineReceiver
-from twisted.internet import reactor, stdio
+from twisted.internet import threads, reactor, stdio
 from twisted.internet.task import LoopingCall
 import json
 import nacl.encoding
 import nacl.signing
 from decimal import *
 from collections import deque
+from POW import find_nonce_random_start
 
 def nodeID(addr):
     """Helper function to create nodeid"""
     return addr.host + "_" + str(addr.port)
+
+class POW_Solver():
+
+    def __init__(self, factory, hash_value):
+        self.factory = factory
+        self.hash = hash_value
+
+    def start(self):
+        print("started pow")
+        nonce = find_nonce_random_start(self.hash, self.factory.ns.POW_DIFFICULTY)
+        return nonce
+
+    def reset (self, hash_value):
+        print("hash reset")
+        self.hash = hash_value
+
+
 
 class NodeProtocol(LineReceiver):
     """ Protocol for each individual peer connection """
@@ -257,6 +275,14 @@ class NodeFactory(ClientFactory):
         self.ns = NETWORK_SETTINGS
         self.block_buffer = deque()
 
+    def startPOW(self):
+        self.pow_function = POW_Solver(self, self.ledger.current_block_hash())
+        d = threads.deferToThread(self.pow_function.start)
+        d.addCallback(self.update)
+
+    def resetPOW(self):
+        self.pow_function.reset(self.ledger.current_block_hash())
+
     def buildProtocol(self, addr):
         if addr.host not in self.peers_ip_list:
             newProtocol = NodeProtocol(addr, self)
@@ -281,6 +307,8 @@ class NodeFactory(ClientFactory):
         new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash(), nonce)
         if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
+            self.resetPOW()
+            self.startPOW()
         else:
             print("Invalid block")
         print("sent block")
@@ -307,7 +335,7 @@ class NodeFactory(ClientFactory):
                 if self.ledger.add(block):
                     print("Received block " + str(block.block_number))
                     self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
-
+                    self.resetPOW()
             elif block.block_number > self.ledger.current_block_number():
                 if len(self.block_buffer) == 0 :
                     self.block_buffer.append(block)
@@ -332,11 +360,13 @@ class NodeFactory(ClientFactory):
                 if block.prev_hash == self.ledger.current_block_hash():
                     if self.ledger.add_buffer(self.block_buffer):
                         print("Received block buffer now at block " + str(self.ledger.current_block_number()))
+                        self.resetPOW()
                     self.block_buffer.clear()
 
                 elif self.ledger.is_root(block):
                     if self.ledger.add_buffer(self.block_buffer):
                         print("Received block buffer now at block " + str(self.ledger.current_block_number()))
+                        self.resetPOW()
                     self.block_buffer.clear()
 
                 else:
