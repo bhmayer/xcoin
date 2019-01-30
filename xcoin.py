@@ -98,18 +98,9 @@ def maintainPeerList(factory):
         factory.requestPeers()
         print("maintain")
 
-
-
-def update(factory):
-    factory.update()
-
 lc = LoopingCall(maintainPeerList, factory)
 # reactor.callLater(5, lc)
 lc.start(20)
-
-if args.bootstrap:
-    lc2 = LoopingCall(update, factory)
-    lc2.start(10)
 
 
 reactor.listenTCP(PORT, factory)
