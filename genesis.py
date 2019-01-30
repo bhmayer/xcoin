@@ -10,6 +10,7 @@ import helper
 import nacl.encoding
 import nacl.signing
 import nacl.bindings
+from POW import find_nonce
 
 seed = pickle.load( open("seed.p", "rb") )
 signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
@@ -22,7 +23,7 @@ def genesis():
     value = 1
     genesis_transaction = Transaction("0", value, -1, pubkey)
     genesis_transactions = [genesis_transaction]
-    genesis_block = Block(genesis_transactions, 0, 0)
+    genesis_block = Block(genesis_transactions, 0, 0, 0)
     helper.label_transactions(genesis_block, 0)
     genesis_block.set_block_number(0)
     genesis_block.set_hash()

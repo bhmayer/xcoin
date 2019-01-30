@@ -11,9 +11,10 @@ import json
 import nacl.signing
 import nacl.exceptions
 from decimal import *
+import network_settings as ns
 
 miner_reward = Decimal("0.1")
-POW_difficulty = 0
+POW_difficulty = ns.POW_DIFFICULTY
 
 #Ledger class for holding blocks
 class Ledger:
