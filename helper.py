@@ -209,6 +209,17 @@ def valid_reward(transaction, miner_reward):
    z = transaction.input_transaction_hashes == ["0"]
    return x and y and z
 
+def check_nonce(hash_value, nonce, POW_difficulty):
+    target = ""
+    for _ in range(POW_difficulty):
+        target = target + "0"
+    
+    result = hashlib.sha256((hash_value+str(nonce)).encode('utf-8')).hexdigest()
+
+    if result[:POW_difficulty] == target:
+        return True
+    
+    return False
 
 
         

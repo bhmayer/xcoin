@@ -50,6 +50,10 @@ class Ledger:
         if self.current_block_number() + 1 != block.block_number:
             return False
 
+        #Check noonce
+        if helper.check_nonce(self.current_block_hash(), block.nonce, POW_difficulty) == False:
+            return False
+
         #Pop reward transaction from last part of the node
         reward_transaction = block.transactions.pop()
 
@@ -114,6 +118,10 @@ class Ledger:
         #Pop reward transaction from last part of the node
         reward_transaction = block.transactions.pop()
 
+        #Check noonce
+        if helper.check_nonce(self.blocks[block.block_number - 1].hash, block.nonce, POW_difficulty) == False:
+            return False
+
         #Check if reward is valid
         if helper.valid_reward(reward_transaction, miner_reward) == False:
             print("miner reward incorrect")
@@ -125,7 +133,6 @@ class Ledger:
         self.blocks = self.blocks[0:block.block_number]
 
         print("new top block" + str(self.blocks[-1].block_number))
-
 
         #Check if transactions are valid
         if helper.valid_block(block, self) == False:
@@ -169,14 +176,14 @@ class Ledger:
 
 #Block class for holding transactions
 class Block:
-    def __init__ (self, transactions, processor, prev_hash):
+    def __init__ (self, transactions, processor, prev_hash, nonce):
         self.timestamp = datetime.datetime.now().timestamp()
         self.transactions = transactions
         self.processor = processor
         self.block_number = -1
         self.prev_hash = prev_hash
         self.hash = -1
-        self.nonce = -1
+        self.nonce = nonce
         self.POW_difficulty = POW_difficulty
         
 
@@ -187,9 +194,6 @@ class Block:
     # set the block number of the block
     def set_block_number(self, x):
         self.block_number = x
-
-    def set_nonce(self, x):
-        self.nonce = x
 
     #Set hash of the block
     def set_hash(self):
