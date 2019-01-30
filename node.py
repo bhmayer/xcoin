@@ -125,6 +125,10 @@ class NodeProtocol(LineReceiver):
         
         self.factory.receivePeers(data)
 
+    def do_transaction(self, data):
+        """ Receive a new transaction """
+        self.factory.receiveTransaction(data, self.addr.host)
+
 class CommandProtocol(LineReceiver):
     """Protocol for receiving input from the command line"""
 
@@ -196,7 +200,8 @@ class CommandProtocol(LineReceiver):
                 new_transaction = Transaction(input_transactions, value, self.factory.my_address, address)
                 signature = self.factory.signing_key.sign(new_transaction.verify_dump().encode("ascii"), encoder=nacl.encoding.HexEncoder).signature
                 new_transaction.sign(signature)
-                self.factory.new_transactions.append(new_transaction)
+                self.factory.new_transactions.add(new_transaction)
+                self.factory.sendPeers("transaction", new_transaction.dump())
                 return
         self.sendLine(b"Insufficient balance")
 
@@ -248,7 +253,7 @@ class CommandProtocol(LineReceiver):
 class NodeFactory(ClientFactory):
     def __init__(self, input_reactor, ledger, my_address, 
         signing_key, PEER_PORT, MY_IP, NETWORK_SETTINGS):
-        self.new_transactions = []
+        self.new_transactions = set()
         self.peers = {}
         self.reactor = input_reactor
         self.ledger = ledger
@@ -286,20 +291,28 @@ class NodeFactory(ClientFactory):
         """ Output a message through the command line """
         self.cmd_line.sendLine(msg.encode("ascii"))
 
+    def receiveTransaction(self, transaction, do_not_send_peer):
+        new_transaction = Transaction.from_json(transaction)
+        if(transaction not in self.new_transactions):
+            print("received transaction")
+            self.new_transactions.add(new_transaction)
+            self.sendPeersExcept("transaction", transaction.dump(), do_not_send_peer)
+            
+
     def balance(self, address):
         """ Return the balance of an address """
         return self.ledger.check_balance(address)
 
     def update(self, nonce):
         """ Add a new block to the ledger will be replace with mining """
-        new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash(), nonce)
+        new_block = Block(list(self.new_transactions), self.my_address, self.ledger.current_block_hash(), nonce)
         if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
             print("sent block")
             self.startPOW()
         else:
             print("Invalid block")   
-        self.new_transactions = []
+        self.new_transactions.clear()
 
     def newBlockExcept(self, block, do_not_send_peer):
         """ Send block to everyone except do_not_send_peer, usually the sender """
@@ -318,7 +331,7 @@ class NodeFactory(ClientFactory):
                     self.getBlock(block.prev_hash)
                 elif self.block_buffer[-1].hash == block.prev_hash:
                     self.block_buffer.appendleft(block)
-            self.new_transactions = []
+            self.new_transactions.clear()
         except Exception as e:
             print(e)
 
@@ -348,7 +361,7 @@ class NodeFactory(ClientFactory):
                 else:
                     self.getBlock(block.prev_hash)
 
-            self.new_transactions = []
+            self.new_transactions.clear()
         except Exception as e:
             print(e)
    

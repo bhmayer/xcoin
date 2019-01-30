@@ -29,6 +29,8 @@ try:
 except ValueError:
     myIP = ni.ifaddresses('en0')[ni.AF_INET][0]['addr']
 
+
+
 #Parse command line arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
@@ -69,7 +71,6 @@ else:
 #Set configuration for network settings
 PEER_LIST_SIZE = 30
 
-
 #Import python ledger object, data type to be updated to allow easier modifictaion
 ledger = pickle.load( open(ledger_dir, "rb" ) )
 
@@ -79,10 +80,13 @@ signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
 verify_key = signing_key.verify_key
 pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 
+print(myIP)
+print(pubkey)
+
 #Enter address for node block rewards
 my_address = pubkey
 
-factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, myIP, ns)
+factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, "myIP", ns)
 reactor.callLater(5, factory.startPOW)
 
 stdio.StandardIO(factory.buildCommandProtocol())
@@ -92,15 +96,15 @@ if args.peer:
 
 
 
-def maintainPeerList(factory):
-    """ Looping call function for maintaing a list of peers """
-    if factory.peerListSize() < ns.PEER_LIST_SIZE:
-        factory.requestPeers()
-        print("maintain")
+# def maintainPeerList(factory):
+#     """ Looping call function for maintaing a list of peers """
+#     if factory.peerListSize() < ns.PEER_LIST_SIZE:
+#         factory.requestPeers()
+#         print("maintain")
 
-lc = LoopingCall(maintainPeerList, factory)
-# reactor.callLater(5, lc)
-lc.start(20)
+# lc = LoopingCall(maintainPeerList, factory)
+# # reactor.callLater(5, lc)
+# lc.start(20)
 
 
 reactor.listenTCP(PORT, factory)
