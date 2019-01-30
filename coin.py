@@ -23,6 +23,9 @@ class Ledger:
 
     def update (self, block):
 
+        if helper.check_nonce(self.current_block_hash(), block.nonce, POW_difficulty) == False:
+            return False
+            
         #Get valid transactions
         block.transactions = helper.process_block(block, self)
 
@@ -221,11 +224,10 @@ class Block:
         transactions = []
         for transaction in transaction_data:
             transactions.append(Transaction.from_json(transaction))
-        block = cls(transactions, block_data[1].encode("ascii"), block_data[2])
+        block = cls(transactions, block_data[1].encode("ascii"), block_data[2], block_data[5])
         block.timestamp = block_data[0]
         block.hash = block_data[3]
         block.block_number = block_data[4]
-        block.nonce = block_data[5]
         block.POW_difficulty = block_data[6]
         return block
 

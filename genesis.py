@@ -11,6 +11,7 @@ import nacl.encoding
 import nacl.signing
 import nacl.bindings
 from POW import find_nonce
+import network_settings as ns
 
 seed = pickle.load( open("seed.p", "rb") )
 signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
@@ -27,6 +28,7 @@ def genesis():
     helper.label_transactions(genesis_block, 0)
     genesis_block.set_block_number(0)
     genesis_block.set_hash()
+    genesis_block.POW_difficulty = ns.POW_DIFFICULTY
     return Ledger([genesis_block])
 
 ledger = genesis()

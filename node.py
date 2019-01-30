@@ -22,21 +22,6 @@ def nodeID(addr):
     """Helper function to create nodeid"""
     return addr.host + "_" + str(addr.port)
 
-class POW_Solver():
-
-    def __init__(self, factory, hash_value):
-        self.factory = factory
-        self.hash = hash_value
-
-    def start(self):
-        print("started pow")
-        nonce = find_nonce_random_start(self.hash, self.factory.ns.POW_DIFFICULTY)
-        return nonce
-
-    def reset (self, hash_value):
-        print("hash reset")
-        self.hash = hash_value
-
 
 
 class NodeProtocol(LineReceiver):
@@ -90,7 +75,7 @@ class NodeProtocol(LineReceiver):
                 pass
 
     def do_newBlock(self, data):
-        self.factory.newBlockExcept(data,self.addr.host)
+        self.factory.newBlockExcept(data, self.addr.host)
 
     def do_getBlock(self, data):
         self.factory.newBlockNoSend(data)
@@ -276,12 +261,15 @@ class NodeFactory(ClientFactory):
         self.block_buffer = deque()
 
     def startPOW(self):
-        self.pow_function = POW_Solver(self, self.ledger.current_block_hash())
-        d = threads.deferToThread(self.pow_function.start)
-        d.addCallback(self.update)
+        f = find_nonce_random_start
+        self.d = threads.deferToThread(f, self.ledger.current_block_hash(), self.ns.POW_DIFFICULTY)
+        self.d.addCallbacks(self.update, errback=(lambda x : print("cancelled")))
 
     def resetPOW(self):
-        self.pow_function.reset(self.ledger.current_block_hash())
+        self.d.cancel()
+        f = find_nonce_random_start
+        self.d = threads.deferToThread(f, self.ledger.current_block_hash(), self.ns.POW_DIFFICULTY)
+        self.d.addCallbacks(self.update, errback=(lambda x : print("cancelled")))
 
     def buildProtocol(self, addr):
         if addr.host not in self.peers_ip_list:
@@ -307,11 +295,10 @@ class NodeFactory(ClientFactory):
         new_block = Block(self.new_transactions, self.my_address, self.ledger.current_block_hash(), nonce)
         if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
-            self.resetPOW()
+            print("sent block")
             self.startPOW()
         else:
-            print("Invalid block")
-        print("sent block")
+            print("Invalid block")   
         self.new_transactions = []
 
     # def newBlock(self, block):
@@ -330,10 +317,10 @@ class NodeFactory(ClientFactory):
         """ Send block to everyone except do_not_send_peer, usually the sender """
         try:
             block = Block.from_json(block)
-
+            print("recieved block " + str(block.block_number))
             if block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
-                    print("Received block " + str(block.block_number))
+                    print("added block " + str(block.block_number))
                     self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
                     self.resetPOW()
             elif block.block_number > self.ledger.current_block_number():
@@ -342,13 +329,13 @@ class NodeFactory(ClientFactory):
                     self.getBlock(block.prev_hash)
                 elif self.block_buffer[-1].hash == block.prev_hash:
                     self.block_buffer.appendleft(block)
-
             self.new_transactions = []
         except Exception as e:
             print(e)
 
     def newBlockNoSend (self, block):
         """ Receive a block and do not send it, useful when asking for older blocks """
+        
         try:
             block = Block.from_json(block)
 
