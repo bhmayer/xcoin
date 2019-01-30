@@ -38,6 +38,7 @@ parser.add_argument("-n", "--nirror", help="run node as a mirror", action="store
 parser.add_argument("-b", "--bootstrap", help="run as docker bootstrap", action="store_true")
 parser.add_argument("-p", "--peer", help="run as docker peer, add additional bootstrap address", action="store_true")
 parser.add_argument("address", nargs='?', help="print out if p tag", type=str)
+parser.add_argument("-d", "--docker", help="auto generate key for docker nodes", action="store_true")
 args = parser.parse_args()
 if args.mirror:
     ledger_dir = "mirror/ledger.p"
@@ -49,14 +50,12 @@ elif args.bootstrap:
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
-    generateRandomSeed()
 elif args.peer:
     ledger_dir = "peer/ledger.p"
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8123
     BOOTSTRAP_ADDRESS = args.address
-    generateRandomSeed()
 elif args.nirror:
     ledger_dir = "ledger.p"
     seed_dir = "seed.p"
@@ -67,6 +66,9 @@ else:
     seed_dir = "seed.p"
     PORT = 8123
     PEER_PORT = 8124
+
+if args.docker:
+    generateRandomSeed()
 
 #Set configuration for network settings
 PEER_LIST_SIZE = 30

@@ -15,5 +15,5 @@ RUN pip install PyNacl Twisted Netifaces
 EXPOSE 8123
 
 # Run app.py when the container launches
-ENTRYPOINT ["python", "xcoin.py"]
+ENTRYPOINT ["python", "xcoin.py", "-d"]
 

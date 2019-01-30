@@ -319,6 +319,7 @@ class NodeFactory(ClientFactory):
         try:
             block = Block.from_json(block)
             print("recieved block " + str(block.block_number))
+
             if block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
                     print("added block " + str(block.block_number))
