@@ -301,18 +301,6 @@ class NodeFactory(ClientFactory):
             print("Invalid block")   
         self.new_transactions = []
 
-    # def newBlock(self, block):
-    #     try:
-    #         block = Block.from_json(block)
-    #         if self.ledger.add(block):
-    #             print("Received block " + str(block.block_number))
-    #             self.sendPeers("newBlock", block.dump())
-    #         # else:
-    #         #     print("Invalid block")
-    #         self.new_transactions = []
-    #     except Exception as e:
-    #         print(e)
-
     def newBlockExcept(self, block, do_not_send_peer):
         """ Send block to everyone except do_not_send_peer, usually the sender """
         try:
