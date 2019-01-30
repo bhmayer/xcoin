@@ -17,3 +17,6 @@ def generateRandomSeed():
     pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 
     pickle.dump(seed, open( "seed.p", "wb" ))
+
+if __name__ == "__main__":
+    generateRandomSeed()
