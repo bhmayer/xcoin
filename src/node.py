@@ -16,7 +16,7 @@ import nacl.encoding
 import nacl.signing
 from decimal import *
 from collections import deque
-from POW import find_nonce_random_start
+from proof_of_work import find_nonce_random_start
 
 def nodeID(addr):
     """Helper function to create nodeid"""

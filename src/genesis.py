@@ -10,7 +10,7 @@ import helper
 import nacl.encoding
 import nacl.signing
 import nacl.bindings
-from POW import find_nonce
+from proof_of_work import find_nonce
 import network_settings as ns
 
 seed = pickle.load( open("seed.p", "rb") )

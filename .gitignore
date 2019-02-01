@@ -7,11 +7,10 @@ __pycache__/
 *.so
 
 # Files
-mirror
-ledger.p
-seed.p
-xcoin.code-workspace
-peer
+src/mirror
+src/ledger.p
+src/seed.p
+src/peer
 
 #dsstore
 .DS_Store
