@@ -23,7 +23,7 @@ import netifaces as ni
 import network_settings as ns
 
 #Find machine's own ip address
-# ni.ifaddresses('en0')
+#ni.ifaddresses('en0')
 try:
     myIP = ni.ifaddresses('eth0')[ni.AF_INET][0]['addr']
 except ValueError:
