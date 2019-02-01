@@ -29,49 +29,25 @@ try:
 except ValueError:
     myIP = ni.ifaddresses('en0')[ni.AF_INET][0]['addr']
 
+ledger_dir = "ledger.p"
+seed_dir = "seed.p"
 
+PORT = 8123
+PEER_PORT = 8123
 
 #Parse command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--mirror", help="run node as a mirror", action="store_true")
-parser.add_argument("-n", "--nirror", help="run node as a mirror", action="store_true")
 parser.add_argument("-b", "--bootstrap", help="run as docker bootstrap", action="store_true")
 parser.add_argument("-p", "--peer", help="run as docker peer, add additional bootstrap address", action="store_true")
-parser.add_argument("address", nargs='?', help="print out if p tag", type=str)
-parser.add_argument("-d", "--docker", help="auto generate key for docker nodes", action="store_true")
+parser.add_argument("-a", "--autogen", help="auto generate key", action="store_true")
 args = parser.parse_args()
-if args.mirror:
-    ledger_dir = "mirror/ledger.p"
-    seed_dir = "mirror/seed.p"
-    PORT = 8124
-    PEER_PORT = 8123
-elif args.bootstrap:
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8123
-elif args.peer:
-    ledger_dir = "peer/ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8123
+
+if args.peer:
     BOOTSTRAP_ADDRESS = args.address
-elif args.nirror:
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8125
-    PEER_PORT = 8123
-else:
-    ledger_dir = "ledger.p"
-    seed_dir = "seed.p"
-    PORT = 8123
-    PEER_PORT = 8124
 
-if args.docker:
+
+if args.autogen:
     generateRandomSeed()
-
-#Set configuration for network settings
-PEER_LIST_SIZE = 30
 
 #Import python ledger object, data type to be updated to allow easier modifictaion
 ledger = pickle.load( open(ledger_dir, "rb" ) )
@@ -82,14 +58,13 @@ signing_key = nacl.signing.SigningKey(seed.encode("ascii"))
 verify_key = signing_key.verify_key
 pubkey = verify_key.encode(encoder=nacl.encoding.HexEncoder)
 
-print(myIP)
-print(pubkey)
+print("IP Address: " + myIP)
+print("Public Key: " + str(pubkey))
 
 #Enter address for node block rewards
 my_address = pubkey
 
 factory = NodeFactory(reactor, ledger, my_address, signing_key, PEER_PORT, "myIP", ns)
-reactor.callLater(5, factory.startPOW)
 
 stdio.StandardIO(factory.buildCommandProtocol())
 
@@ -98,15 +73,14 @@ if args.peer:
 
 
 
-# def maintainPeerList(factory):
-#     """ Looping call function for maintaing a list of peers """
-#     if factory.peerListSize() < ns.PEER_LIST_SIZE:
-#         factory.requestPeers()
-#         print("maintain")
+def maintainPeerList(factory):
+    """ Looping call function for maintaing a list of peers """
+    if factory.peerListSize() < ns.PEER_LIST_SIZE:
+        factory.requestPeers()
 
-# lc = LoopingCall(maintainPeerList, factory)
-# # reactor.callLater(5, lc)
-# lc.start(20)
+lc = LoopingCall(maintainPeerList, factory)
+
+lc.start(20)
 
 
 reactor.listenTCP(PORT, factory)

@@ -38,7 +38,6 @@ class Ledger:
 
         block.set_block_number(self.current_block_number() + 1)
         block.set_hash()
-        print("Created block " + str(block.block_number))
         self.blocks.append(block)
         return True
 
@@ -63,12 +62,10 @@ class Ledger:
 
         #Check if transactions are valid
         if helper.valid_block(block, self) == False:
-            print("invalid transactions")
             return False
 
         #Check if reward is valid, SECURITY VULNERABILITY, CAN PUT ANYONE AS SENDER AND STEAL MONEY
         if helper.valid_reward(reward_transaction, miner_reward) == False:
-            print("miner reward incorrect")
             return False
 
         #Add back reward transaction
@@ -79,7 +76,6 @@ class Ledger:
         provided_hash = block.hash
         block.set_hash()
         if block.hash != provided_hash:
-            print("could not duplicate hash")
             return False
 
         self.blocks.append(block)
@@ -128,19 +124,14 @@ class Ledger:
 
         #Check if reward is valid
         if helper.valid_reward(reward_transaction, miner_reward) == False:
-            print("miner reward incorrect")
             return False
 
         #Remove top blocks
-        print("Removing top blocks" + str(block.block_number))
         extra_blocks = self.blocks[(block.block_number - 1):]
         self.blocks = self.blocks[0:block.block_number]
 
-        print("new top block" + str(self.blocks[-1].block_number))
-
         #Check if transactions are valid
         if helper.valid_block(block, self) == False:
-            print("invalid transactions")
             self.blocks.append(extra_blocks)
             return False
 
@@ -153,7 +144,6 @@ class Ledger:
         block.set_hash()
         if block.hash != provided_hash:
             self.blocks.append(extra_blocks)
-            print("could not duplicate hash")
             return False
 
         self.blocks.append(block)
@@ -166,7 +156,6 @@ class Ledger:
         """ Returns true if a block can fit in the ledger """
         if block.block_number < len(self.blocks):
             if block.prev_hash == self.blocks[block.block_number - 1].hash and block.hash != self.blocks[block.block_number].hash:
-                print("is root block!")
                 return True
 
         return False

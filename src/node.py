@@ -34,8 +34,6 @@ class NodeProtocol(LineReceiver):
 
     def connectionMade(self):
         self.state = "CONNECTED"
-        #self.sendLine(b"connected")
-        print("connected")
 
     def connectionLost(self, reason):
         self.state = "OLD"
@@ -177,6 +175,8 @@ class CommandProtocol(LineReceiver):
     def do_quit(self):
         """quit: Quit this session"""
         self.sendLine(b'Goodbye.')
+        pickle.dump(self.factory.ledger, open( "ledger.p", "wb" ))
+        self.factory.cancelPOW()
         self.transport.loseConnection()
 
     def do_balance(self):
@@ -247,7 +247,12 @@ class CommandProtocol(LineReceiver):
         self.factory.requestPeers()
 
     def do_save(self):
-        pickle.dump(self.factory.ledger, open( "peer_ledger.p", "wb" ))
+        pickle.dump(self.factory.ledger, open( "ledger.p", "wb" ))      
+
+    def do_pow(self):
+        self.factory.startPOW()
+        self.sendLine(b"Started solving next block")
+
 
 
 class NodeFactory(ClientFactory):
@@ -268,13 +273,16 @@ class NodeFactory(ClientFactory):
     def startPOW(self):
         f = find_nonce_random_start
         self.d = threads.deferToThread(f, self.ledger.current_block_hash(), self.ns.POW_DIFFICULTY)
-        self.d.addCallbacks(self.update, errback=(lambda x : print("cancelled")))
+        self.d.addCallbacks(self.update, errback=(lambda x : None))
 
     def resetPOW(self):
         self.d.cancel()
         f = find_nonce_random_start
         self.d = threads.deferToThread(f, self.ledger.current_block_hash(), self.ns.POW_DIFFICULTY)
-        self.d.addCallbacks(self.update, errback=(lambda x : print("cancelled")))
+        self.d.addCallbacks(self.update, errback=(lambda x : None))
+
+    def cancelPOW(self):
+        self.d.cancel()
 
     def buildProtocol(self, addr):
         if addr.host not in self.peers_ip_list:
@@ -308,21 +316,16 @@ class NodeFactory(ClientFactory):
         new_block = Block(list(self.new_transactions), self.my_address, self.ledger.current_block_hash(), nonce)
         if self.ledger.update(new_block):
             self.sendPeers("newBlock", new_block.dump())
-            print("sent block")
             self.startPOW()
-        else:
-            print("Invalid block")   
         self.new_transactions.clear()
 
     def newBlockExcept(self, block, do_not_send_peer):
         """ Send block to everyone except do_not_send_peer, usually the sender """
         try:
             block = Block.from_json(block)
-            print("recieved block " + str(block.block_number))
 
             if block.prev_hash == self.ledger.current_block_hash():
                 if self.ledger.add(block):
-                    print("added block " + str(block.block_number))
                     self.sendPeersExcept("newBlock", block.dump(), do_not_send_peer)
                     self.resetPOW()
             elif block.block_number > self.ledger.current_block_number():
@@ -349,13 +352,11 @@ class NodeFactory(ClientFactory):
                 #Check if this is the next block in sequence
                 if block.prev_hash == self.ledger.current_block_hash():
                     if self.ledger.add_buffer(self.block_buffer):
-                        print("Received block buffer now at block " + str(self.ledger.current_block_number()))
                         self.resetPOW()
                     self.block_buffer.clear()
 
                 elif self.ledger.is_root(block):
                     if self.ledger.add_buffer(self.block_buffer):
-                        print("Received block buffer now at block " + str(self.ledger.current_block_number()))
                         self.resetPOW()
                     self.block_buffer.clear()
 
