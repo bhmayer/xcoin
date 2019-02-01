@@ -2,13 +2,13 @@
 
 This is a full implementation of an object orientated blockchain in python.
 
-##Development highlights
+## Development highlights
 - Unspent transaction model
 - Proof of work consensus
 - Asynchronous peer to peer using twisted
 - Testing using Docker Compose
 
-##How to install
+## How to install
 1. Make sure you have python 3 installed on your machine
 1. Clone desired version to local directory
 1. Navigate through terminal to the package directory
@@ -21,7 +21,7 @@ This is a full implementation of an object orientated blockchain in python.
 1. Switch to the src directory
 ```cd src```
 
-###Start your own chain
+### Start your own chain
 1. Activate virtual enviroment
 ```source env/bin/activate```
 1. Switch to the src directory
@@ -34,7 +34,7 @@ This is a full implementation of an object orientated blockchain in python.
 1. Start your node 
 ```python xcoin.py```
 
-###Join an existing chain
+### Join an existing chain
 1. Generate your own public/private key pair
 ```python generate_seed.py``
 1. Enter your own 32 character seed at the prompt
@@ -43,7 +43,7 @@ This is a full implementation of an object orientated blockchain in python.
 ```python xcoin.py -p ip```
 
 
-##Commands while running xcoin
+## Commands while running xcoin
 Help: List available commands
 Balance: Display your current balance
 pow: Start hashing to create clocks
