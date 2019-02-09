@@ -27,10 +27,10 @@ This is a full implementation of an object orientated blockchain in python.
 1. Switch to the src directory
 ```cd src```
 1. Generate your own public/private key pair
-```python generate_seed.py``
+```python generate_seed.py```
 1. Enter your own 32 character seed at the prompt
 1. Create a genesis block
-```python genesis.py``
+```python genesis.py```
 1. Start your node 
 ```python xcoin.py```
 
