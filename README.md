@@ -36,7 +36,7 @@ This is a full implementation of an object orientated blockchain in python.
 
 ### Join an existing chain
 1. Generate your own public/private key pair
-```python generate_seed.py``
+```python generate_seed.py```
 1. Enter your own 32 character seed at the prompt
 1. Add the genesis block from the desired chain to your directory, a ledger.p file
 1. Start your node in peer modes with the ip of a known peer
