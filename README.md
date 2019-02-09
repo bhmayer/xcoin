@@ -44,10 +44,10 @@ This is a full implementation of an object orientated blockchain in python.
 
 
 ## Commands while running xcoin
-Help: List available commands
-Balance: Display your current balance
-pow: Start hashing to create clocks
-send: (send value address) Generate a transaction to spend money
-quit: Save ledger and shutdown node
+- **Help**: List available commands
+- **Balance**: Display your current balance
+- **pow**: Start hashing to create clocks
+- **send**: (send value address) Generate a transaction to spend money
+- **quit**: Save ledger and shutdown node
 
 
