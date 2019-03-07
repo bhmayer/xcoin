@@ -2,6 +2,10 @@
 
 This is a full implementation of an object orientated blockchain in python.
 
+Check out my blog for full technical details and the story behind the project.
+
+[Building a Blockchain and an Engineer](https://benhmayer.com/posts/building-a-blockchain-and-an-engineer/)
+
 ## Development highlights
 - Unspent transaction model
 - Proof of work consensus
